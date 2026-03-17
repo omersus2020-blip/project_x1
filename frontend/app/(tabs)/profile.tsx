@@ -40,7 +40,7 @@ export default function ProfileScreen() {
                     <>
                         {/* Header */}
                         <View style={styles.header}>
-                            <Text style={styles.greeting}>שלום, {MOCK_USER.name}!</Text>
+                            <Text style={styles.greeting}>שלום גברת נכבדה, {MOCK_USER.name}!</Text>
                         </View>
 
                         {/* Avatar + Savings */}

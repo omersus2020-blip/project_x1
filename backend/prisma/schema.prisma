@@ -7,6 +7,12 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  SUPPLIER
 }
 
 enum TenderStatus {
@@ -15,20 +21,63 @@ enum TenderStatus {
   CANCELLED
 }
 
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customerEnrollments CustomerEnrollment[]
+  supplierBids        SupplierBid[]
+
+  @@map("users")
+}
+
 model Tender {
-  id                   String       @id @default(uuid())
-  title                String
-  description          String
-  originalPrice        Float
-  currentPrice         Float
-  targetParticipants   Int
-  currentParticipants  Int          @default(0)
-  endDate              DateTime
-  imageUrl             String
-  status               TenderStatus @default(ACTIVE)
-  category             String       @default("כללי")
-  createdAt            DateTime     @default(now())
-  updatedAt            DateTime     @updatedAt
+  id                  String       @id @default(uuid())
+  title               String
+  description         String
+  originalPrice       Float
+  currentPrice        Float
+  targetParticipants  Int
+  currentParticipants Int          @default(0)
+  endDate             DateTime
+  imageUrl            String
+  status              TenderStatus @default(ACTIVE)
+  category            String       @default("כללי")
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  enrollments CustomerEnrollment[]
+  bids        SupplierBid[]
 
   @@map("tenders")
+}
+
+model CustomerEnrollment {
+  id        String   @id @default(uuid())
+  tenderId  String
+  userId    String
+  createdAt DateTime @default(now())
+
+  tender Tender @relation(fields: [tenderId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([tenderId, userId])
+  @@map("customer_enrollments")
+}
+
+model SupplierBid {
+  id        String   @id @default(uuid())
+  tenderId  String
+  userId    String
+  bidPrice  Float
+  createdAt DateTime @default(now())
+
+  tender Tender @relation(fields: [tenderId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("supplier_bids")
 }

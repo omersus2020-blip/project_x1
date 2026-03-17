@@ -16,22 +16,16 @@ export default function TabLayout() {
                 headerShown: false,
                 tabBarButton: HapticTab,
                 tabBarStyle: {
-                    height: 60,
-                    paddingBottom: 8,
-                    paddingTop: 4,
+                    height: 70,
+                    paddingBottom: 15,
+                    paddingTop: 5,
                 },
                 tabBarLabelStyle: {
                     fontSize: 12,
                     fontWeight: '600',
                 },
             }}>
-            <Tabs.Screen
-                name="index"
-                options={{
-                    title: 'מכרזים באוויר',
-                    tabBarIcon: ({ color }) => <MaterialIcons name="local-offer" size={26} color={color} />,
-                }}
-            />
+
             <Tabs.Screen
                 name="search"
                 options={{

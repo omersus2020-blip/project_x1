@@ -1,98 +1,62 @@
 import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
-
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
-
+const prisma = new PrismaClient();
 async function main() {
     console.log('🌱 Seeding database...');
 
-    // Clear existing data
+    // Clear existing data (order matters due to foreign keys)
+    await prisma.supplierBid.deleteMany();
+    await prisma.customerEnrollment.deleteMany();
     await prisma.tender.deleteMany();
+    await prisma.user.deleteMany();
 
     const now = new Date();
 
-    await prisma.tender.createMany({
-        data: [
-            {
-                title: 'סל קניות שבועי',
-                description: 'סל קניות משפחתי הכולל מוצרי מזון בסיסיים לשבוע שלם.',
-                originalPrice: 350,
-                currentPrice: 315,
-                targetParticipants: 100,
-                currentParticipants: 84,
-                endDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
-                imageUrl: 'https://cdn-icons-png.flaticon.com/512/3514/3514491.png',
-                status: 'ACTIVE',
-                category: 'מזון',
-            },
-            {
-                title: 'מוצרי ניקיון',
-                description: 'חבילת מוצרי ניקיון לבית - כולל אבקת כביסה, סבון כלים ועוד.',
-                originalPrice: 120,
-                currentPrice: 108,
-                targetParticipants: 80,
-                currentParticipants: 45,
-                endDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000),
-                imageUrl: 'https://cdn-icons-png.flaticon.com/512/2553/2553691.png',
-                status: 'ACTIVE',
-                category: 'מזון',
-            },
-            {
-                title: 'ירקות מהמשק',
-                description: 'מבחר ירקות טריים ישירות מהחקלאי.',
-                originalPrice: 95,
-                currentPrice: 85,
-                targetParticipants: 60,
-                currentParticipants: 30,
-                endDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
-                imageUrl: 'https://cdn-icons-png.flaticon.com/512/2329/2329865.png',
-                status: 'ACTIVE',
-                category: 'מזון',
-            },
-            {
-                title: 'פירות מהמשק',
-                description: 'מבחר פירות עונתיים טריים ישירות מהחקלאי.',
-                originalPrice: 110,
-                currentPrice: 99,
-                targetParticipants: 70,
-                currentParticipants: 55,
-                endDate: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000),
-                imageUrl: 'https://cdn-icons-png.flaticon.com/512/3194/3194766.png',
-                status: 'ACTIVE',
-                category: 'מזון',
-            },
-            {
-                title: "תנור נינג'ה",
-                description: "תנור אוויר חם נינג'ה דגם AF300 - בישול בריא וקל.",
-                originalPrice: 650,
-                currentPrice: 585,
-                targetParticipants: 50,
-                currentParticipants: 22,
-                endDate: new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000),
-                imageUrl: 'https://cdn-icons-png.flaticon.com/512/3075/3075929.png',
-                status: 'ACTIVE',
-                category: 'חשמל',
-            },
-            {
-                title: 'מקרר',
-                description: 'מקרר דו דלתי 520 ליטר עם מקפיא תחתון.',
-                originalPrice: 2200,
-                currentPrice: 1980,
-                targetParticipants: 30,
-                currentParticipants: 12,
-                endDate: new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000),
-                imageUrl: 'https://cdn-icons-png.flaticon.com/512/3474/3474360.png',
-                status: 'ACTIVE',
-                category: 'חשמל',
-            },
-        ],
+    // Create 1 Dummy Tender
+    const tender = await prisma.tender.create({
+        data: {
+            title: 'Washing Machine',
+            description: 'A brand new high end washing machine.',
+            originalPrice: 1500,
+            currentPrice: 1500,
+            targetParticipants: 10,
+            currentParticipants: 3,
+            endDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+            imageUrl: 'https://cdn-icons-png.flaticon.com/512/3514/3514491.png',
+            status: 'ACTIVE',
+            category: 'חשמל',
+        }
     });
+    console.log(`Created Tender: ${tender.title}`);
 
-    const count = await prisma.tender.count();
-    console.log(`✅ Seeded ${count} tenders successfully!`);
+    // Create 3 Customers
+    const customer1 = await prisma.user.create({ data: { name: 'Customer One', email: 'c1@example.com', role: 'CUSTOMER' } });
+    const customer2 = await prisma.user.create({ data: { name: 'Customer Two', email: 'c2@example.com', role: 'CUSTOMER' } });
+    const customer3 = await prisma.user.create({ data: { name: 'Customer Three', email: 'c3@example.com', role: 'CUSTOMER' } });
+
+    // Enroll them in the tender
+    await prisma.customerEnrollment.createMany({
+        data: [
+            { tenderId: tender.id, userId: customer1.id },
+            { tenderId: tender.id, userId: customer2.id },
+            { tenderId: tender.id, userId: customer3.id },
+        ]
+    });
+    console.log(`Created 3 Customers and enrolled them in the tender`);
+
+    // Create 2 Suppliers
+    const supplier1 = await prisma.user.create({ data: { name: 'Supplier One', email: 's1@example.com', role: 'SUPPLIER' } });
+    const supplier2 = await prisma.user.create({ data: { name: 'Supplier Two', email: 's2@example.com', role: 'SUPPLIER' } });
+
+    // Create Supplier Bids
+    await prisma.supplierBid.createMany({
+        data: [
+            { tenderId: tender.id, userId: supplier1.id, bidPrice: 1400 },
+            { tenderId: tender.id, userId: supplier2.id, bidPrice: 1350 },
+        ]
+    });
+    console.log(`Created 2 Suppliers and submitted bids for the tender`);
+
+    console.log(`✅ Seeding finished.`);
 }
 
 main()

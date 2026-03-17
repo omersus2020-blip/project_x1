@@ -20,8 +20,13 @@ export class TendersController {
         return this.tendersService.findOne(id);
     }
 
-    @Post(':id/join')
-    join(@Param('id') id: string, @Body('userId') userId: string) {
-        return this.tendersService.join(id, userId);
+    @Post(':id/enroll')
+    enroll(@Param('id') id: string, @Body('userId') userId: string) {
+        return this.tendersService.enroll(id, userId);
+    }
+
+    @Post(':id/bid')
+    bid(@Param('id') id: string, @Body('userId') userId: string, @Body('bidPrice') bidPrice: number) {
+        return this.tendersService.bid(id, userId, bidPrice);
     }
 }
