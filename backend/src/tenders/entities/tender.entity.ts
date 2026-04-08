@@ -22,6 +22,7 @@ export class Tender {
     targetParticipants: number;
     category: string;
     status: TenderStatus;
+    supplierId: string;
     priceTiers: PriceTier[];
     createdAt: Date;
     updatedAt: Date;

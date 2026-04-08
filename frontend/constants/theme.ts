@@ -1,20 +1,20 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Color system matching Figma "Group Deals" design.
+ * Clean white/black/green palette with modern LTR layout.
  */
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#1E3A8A';
-const tintColorDark = '#93C5FD';
+const tintColorLight = '#000000';
+const tintColorDark = '#FFFFFF';
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#F8F9FA',
+    text: '#1A1A1A',
+    background: '#FFFFFF',
     tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
+    icon: '#6B7280',
+    tabIconDefault: '#9CA3AF',
     tabIconSelected: tintColorLight,
   },
   dark: {
@@ -27,41 +27,71 @@ export const Colors = {
   },
 };
 
-/** App-specific brand colors */
+/** App-specific brand colors – Figma design tokens */
 export const AppColors = {
-  primaryBlue: '#1E3A8A',
-  primaryBlueLight: '#3B82F6',
-  headerGradientStart: '#1E3A8A',
-  headerGradientEnd: '#2563EB',
-  accentOrange: '#F97316',
-  accentOrangeLight: '#FB923C',
-  savingsGreen: '#16A34A',
-  savingsGreenLight: '#4ADE80',
+  // Core
+  black: '#1A1A1A',
+  white: '#FFFFFF',
+  background: '#FFFFFF',
+  backgroundGray: '#F5F5F5',
+
+  // Green for prices/positive
+  priceGreen: '#16A34A',
+  priceGreenLight: '#DCFCE7',
+
+  // Text
+  textPrimary: '#1A1A1A',
+  textSecondary: '#6B7280',
+  textMuted: '#9CA3AF',
+
+  // Cards
   cardBackground: '#FFFFFF',
-  cardShadow: 'rgba(0, 0, 0, 0.08)',
   cardBorder: '#E5E7EB',
-  savingsBannerBg: '#1E3A8A',
-  savingsBannerText: '#FFFFFF',
-  priceText: '#1E3A8A',
-  countdownText: '#6B7280',
-  ctaButton: '#2563EB',
+  cardShadow: 'rgba(0, 0, 0, 0.06)',
+
+  // Buttons
+  ctaButton: '#1A1A1A',
   ctaButtonText: '#FFFFFF',
-  sectionTitle: '#1F2937',
+
+  // Category chips
+  chipActive: '#1A1A1A',
+  chipActiveText: '#FFFFFF',
+  chipInactive: '#FFFFFF',
+  chipInactiveText: '#4B5563',
+  chipBorder: '#E5E7EB',
+
+  // Badges
+  discountBadge: '#16A34A',
+  discountBadgeText: '#FFFFFF',
+  categoryBadge: '#F3F4F6',
+  categoryBadgeText: '#374151',
+
+  // Progress bar
+  progressBg: '#E5E7EB',
+  progressFill: '#1A1A1A',
+
+  // Tab bar
+  tabActive: '#000000',
+  tabInactive: '#9CA3AF',
+
+  // Legacy aliases (for backward compatibility)
+  primaryBlue: '#1A1A1A',
+  primaryBlueLight: '#374151',
+  savingsGreen: '#16A34A',
+  accentOrange: '#F97316',
+  sectionTitle: '#1A1A1A',
   subtitleText: '#6B7280',
   divider: '#E5E7EB',
-  badgeBg: '#DBEAFE',
-  badgeText: '#1E40AF',
+  badgeBg: '#F3F4F6',
+  badgeText: '#374151',
+  countdownText: '#6B7280',
 };
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {

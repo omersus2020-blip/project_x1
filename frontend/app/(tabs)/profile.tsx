@@ -1,38 +1,94 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
     FlatList,
     StyleSheet,
     SafeAreaView,
+    Pressable,
+    Alert,
 } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { MOCK_USER } from '@/constants/mock-data';
 import { AppColors } from '@/constants/theme';
-import { TenderHistoryEntry } from '@/constants/types';
+import { getStoredUser, logout } from '@/constants/api';
+import { useTranslation } from 'react-i18next';
+import { changeAppLanguage } from '@/i18n';
 
-function HistoryItem({ item }: { item: TenderHistoryEntry }) {
-    return (
-        <View style={styles.historyCard}>
-            <View style={styles.historyIconContainer}>
-                <MaterialIcons name={item.icon as any} size={28} color={AppColors.primaryBlue} />
-            </View>
-            <View style={styles.historyInfo}>
-                <Text style={styles.historyTitle}>{item.title}</Text>
-                <Text style={styles.historyDate}>{item.date}</Text>
-            </View>
-            <View style={styles.savingsBadge}>
-                <Text style={styles.savingsBadgeText}>חיסכון {item.savings} ש״ח</Text>
-            </View>
-        </View>
-    );
+interface SettingsMenuItem {
+    id: string;
+    icon: string;
+    title: string;
+    subtitle: string;
+    route: string;
+}
+
+
+
+function getInitials(name: string): string {
+    const parts = name.split(' ');
+    return parts.map((p) => p[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function formatDate(dateStr: string): string {
+    const d = new Date(dateStr);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 export default function ProfileScreen() {
+    const router = useRouter();
+    const { t, i18n } = useTranslation();
+    const [user, setUser] = useState<any>(null);
+
+    const settingsItems = [
+        { id: 's1', icon: 'person-outline', title: t('profile.edit_profile', 'Edit Profile'), subtitle: t('profile.update_personal', 'Update your personal information'), route: '/edit-profile' },
+        { id: 's2', icon: 'location-on', title: t('profile.shipping', 'Shipping Addresses'), subtitle: t('profile.manage_shipping', 'Manage delivery locations'), route: '/shipping-addresses' },
+        { id: 's3', icon: 'credit-card', title: t('profile.payment_methods', 'Payment Methods'), subtitle: t('profile.manage_payment', 'Manage cards and payment options'), route: '/payment-methods' },
+        { id: 's4', icon: 'notifications-none', title: t('profile.notifications', 'Notifications'), subtitle: t('profile.manage_notifications', 'Manage your alerts and updates'), route: '/notifications-settings' },
+        { id: 's5', icon: 'settings', title: t('profile.settings', 'Settings'), subtitle: t('profile.app_preferences', 'App preferences and privacy'), route: '/settings' },
+        { id: 's6', icon: 'help-outline', title: t('profile.help_support', 'Help & Support'), subtitle: t('profile.get_help', 'Get help and contact us'), route: '/help-support' },
+    ];
+
+    useFocusEffect(
+        useCallback(() => {
+            loadUser();
+        }, [])
+    );
+
+    const loadUser = async () => {
+        const stored = await getStoredUser();
+        if (stored) setUser(stored);
+    };
+
+    const handleSignOut = () => {
+        Alert.alert(t('profile.sign_out', 'Sign Out'), t('profile.sign_out_confirm', 'Are you sure you want to sign out?'), [
+            { text: t('common.cancel', 'Cancel'), style: 'cancel' },
+            {
+                text: t('profile.sign_out', 'Sign Out'), onPress: async () => {
+                    await logout();
+                    router.replace('/welcome');
+                },
+            },
+        ]);
+    };
+
+    const handleLanguageToggle = () => {
+        const current = i18n.language;
+        if (current === 'en') changeAppLanguage('he');
+        else if (current === 'he') changeAppLanguage('ar');
+        else changeAppLanguage('en');
+    };
+
+    const userName = user?.name || 'User';
+    const userEmail = user?.email || '';
+    const memberSinceStr = user?.createdAt ? formatDate(user.createdAt) : 'Mar 2026';
+    const memberSince = t('profile.member_since', { date: memberSinceStr, defaultValue: `Member since ${memberSinceStr}` });
+
     return (
         <SafeAreaView style={styles.container}>
             <FlatList
-                data={MOCK_USER.tenderHistory}
+                data={settingsItems}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.listContent}
@@ -40,36 +96,60 @@ export default function ProfileScreen() {
                     <>
                         {/* Header */}
                         <View style={styles.header}>
-                            <Text style={styles.greeting}>שלום גברת נכבדה, {MOCK_USER.name}!</Text>
+                            <View style={styles.headerTitleContainer}>
+                                <Text style={styles.headerTitle}>{t('profile.title', 'Profile')}</Text>
+                            </View>
+                            <Pressable 
+                                onPress={handleLanguageToggle} 
+                                style={styles.languageButton}
+                            >
+                                <MaterialIcons name="language" size={24} color={AppColors.textPrimary} />
+                                <Text style={{ fontSize: 10, fontWeight: 'bold', color: AppColors.textPrimary }}>
+                                    {i18n.language.toUpperCase()}
+                                </Text>
+                            </Pressable>
                         </View>
 
-                        {/* Avatar + Savings */}
-                        <View style={styles.profileSection}>
+                        {/* User info card */}
+                        <View style={styles.userCard}>
                             <View style={styles.avatarContainer}>
-                                <MaterialIcons name="person" size={50} color={AppColors.primaryBlue} />
+                                <Text style={styles.avatarText}>
+                                    {getInitials(userName)}
+                                </Text>
                             </View>
-
-                            <View style={styles.savingsCard}>
-                                <View style={styles.savingsRow}>
-                                    <MaterialIcons name="trending-up" size={28} color={AppColors.savingsGreen} />
-                                    <Text style={styles.savingsAmount}>
-                                        ₪{MOCK_USER.totalSavings.toLocaleString()}
-                                    </Text>
-                                    <MaterialIcons name="verified" size={24} color={AppColors.primaryBlueLight} />
-                                </View>
-                                <Text style={styles.savingsLabel}>החיסכון המצטבר שלך</Text>
-                            </View>
-                        </View>
-
-                        {/* History title */}
-                        <View style={styles.sectionHeader}>
-                            <MaterialIcons name="history" size={22} color={AppColors.sectionTitle} />
-                            <Text style={styles.sectionTitle}>היסטוריית מכרזים</Text>
+                            <Text style={styles.userName}>{userName}</Text>
+                            <Text style={styles.userEmail}>{userEmail}</Text>
+                            <Text style={styles.memberSince}>{memberSince}</Text>
                         </View>
                     </>
                 }
-                renderItem={({ item }) => <HistoryItem item={item} />}
-                ListFooterComponent={<View style={{ height: 30 }} />}
+                renderItem={({ item }) => (
+                    <Pressable
+                        style={({ pressed }) => [
+                            styles.menuItem,
+                            pressed && { backgroundColor: '#F9FAFB' },
+                        ]}
+                        onPress={() => router.push(item.route as any)}
+                    >
+                        <View style={styles.menuIconContainer}>
+                            <MaterialIcons name={item.icon as any} size={22} color={AppColors.textPrimary} />
+                        </View>
+                        <View style={styles.menuTextContainer}>
+                            <Text style={styles.menuTitle}>{item.title}</Text>
+                            <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
+                        </View>
+                        <MaterialIcons name="chevron-right" size={22} color={AppColors.textMuted} />
+                    </Pressable>
+                )}
+                ListFooterComponent={
+                    <Pressable
+                        style={({ pressed }) => [styles.signOutButton, pressed && { opacity: 0.9 }]}
+                        onPress={handleSignOut}
+                    >
+                        <MaterialIcons name="logout" size={20} color="#EF4444" />
+                        <Text style={styles.signOutText}>{t('profile.sign_out', 'Sign Out')}</Text>
+                    </Pressable>
+                }
             />
         </SafeAreaView>
     );
@@ -78,140 +158,145 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: '#F5F5F5',
     },
     listContent: {
         paddingBottom: 20,
     },
+
+    // Header
     header: {
-        backgroundColor: AppColors.primaryBlue,
-        paddingVertical: 28,
-        paddingHorizontal: 20,
-        alignItems: 'center',
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
-    },
-    greeting: {
-        fontSize: 26,
-        fontWeight: '800',
-        color: '#FFFFFF',
-        writingDirection: 'rtl',
-    },
-    profileSection: {
-        alignItems: 'center',
-        marginTop: -30,
-        paddingHorizontal: 20,
-    },
-    avatarContainer: {
-        width: 84,
-        height: 84,
-        borderRadius: 42,
-        backgroundColor: '#DBEAFE',
+        flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 4,
-        borderColor: '#FFFFFF',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.12,
-        shadowRadius: 8,
-        elevation: 4,
+        paddingHorizontal: 20,
+        paddingTop: 16,
+        paddingBottom: 16,
+        backgroundColor: AppColors.background,
+        position: 'relative',
     },
-    savingsCard: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 18,
-        paddingVertical: 22,
-        paddingHorizontal: 30,
-        marginTop: 16,
+    headerTitleContainer: {
         alignItems: 'center',
-        width: '100%',
+    },
+    headerTitle: {
+        fontSize: 26,
+        fontWeight: '800',
+        color: AppColors.textPrimary,
+        textAlign: 'center',
+    },
+    languageButton: {
+        position: 'absolute',
+        right: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    // User card
+    userCard: {
+        backgroundColor: AppColors.cardBackground,
+        marginHorizontal: 16,
+        borderRadius: 18,
+        paddingVertical: 24,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+        marginBottom: 12,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
+        shadowOpacity: 0.06,
         shadowRadius: 10,
         elevation: 3,
+        borderWidth: 1,
+        borderColor: AppColors.cardBorder,
     },
-    savingsRow: {
+    avatarContainer: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: '#E5E7EB',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    avatarText: {
+        fontSize: 22,
+        fontWeight: '800',
+        color: AppColors.textPrimary,
+    },
+    userName: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: AppColors.textPrimary,
+        marginBottom: 4,
+    },
+    userEmail: {
+        fontSize: 15,
+        color: AppColors.textSecondary,
+        marginBottom: 12,
+    },
+    memberSince: {
+        fontSize: 12,
+        color: AppColors.textMuted,
+        marginTop: 4,
+        backgroundColor: '#F3F4F6',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 10,
+        overflow: 'hidden',
+    },
+
+    // Settings menu items
+    menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
+        backgroundColor: AppColors.cardBackground,
+        marginHorizontal: 16,
+        marginBottom: 2,
+        paddingVertical: 16,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
     },
-    savingsAmount: {
-        fontSize: 38,
-        fontWeight: '900',
-        color: AppColors.sectionTitle,
+    menuIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: '#F3F4F6',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 14,
     },
-    savingsLabel: {
-        fontSize: 15,
-        color: AppColors.subtitleText,
-        marginTop: 6,
-        writingDirection: 'rtl',
+    menuTextContainer: {
+        flex: 1,
     },
-    sectionHeader: {
-        flexDirection: 'row-reverse',
+    menuTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: AppColors.textPrimary,
+        marginBottom: 2,
+    },
+    menuSubtitle: {
+        fontSize: 13,
+        color: AppColors.textSecondary,
+        marginTop: 2,
+    },
+
+    // Sign out
+    signOutButton: {
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        marginTop: 28,
-        marginBottom: 14,
-    },
-    sectionTitle: {
-        fontSize: 20,
-        fontWeight: '800',
-        color: AppColors.sectionTitle,
-        writingDirection: 'rtl',
-    },
-    historyCard: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        paddingVertical: 16,
-        paddingHorizontal: 16,
         marginHorizontal: 16,
-        marginBottom: 10,
-        flexDirection: 'row-reverse',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 4,
-        elevation: 2,
+        marginTop: 20,
+        paddingVertical: 16,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#FECACA',
+        backgroundColor: '#FEF2F2',
     },
-    historyIconContainer: {
-        width: 50,
-        height: 50,
-        borderRadius: 14,
-        backgroundColor: AppColors.badgeBg,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginLeft: 14,
-    },
-    historyInfo: {
-        flex: 1,
-        alignItems: 'flex-end',
-    },
-    historyTitle: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: AppColors.sectionTitle,
-        writingDirection: 'rtl',
-    },
-    historyDate: {
-        fontSize: 13,
-        color: AppColors.subtitleText,
-        marginTop: 3,
-        writingDirection: 'rtl',
-    },
-    savingsBadge: {
-        backgroundColor: '#DCFCE7',
-        borderRadius: 10,
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        marginRight: 12,
-    },
-    savingsBadgeText: {
-        fontSize: 13,
-        fontWeight: '700',
-        color: AppColors.savingsGreen,
-        writingDirection: 'rtl',
+    signOutText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#EF4444',
     },
 });

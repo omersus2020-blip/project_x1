@@ -21,18 +21,54 @@ enum TenderStatus {
   CANCELLED
 }
 
+enum BidStatus {
+  PENDING
+  WON
+  LOST
+}
+
+enum NotificationType {
+  TENDER_WON
+  TENDER_COMPLETED
+  ORDER_CREATED
+  DELIVERY_UPDATE
+}
+
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  role      Role
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  name       String
+  email      String   @unique
+  phone      String?
+  password   String
+  isVerified Boolean  @default(false)
+  role       Role     @default(CUSTOMER)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   customerEnrollments CustomerEnrollment[]
   supplierBids        SupplierBid[]
+  supplierTenders     Tender[]         @relation("SupplierTenders")
+  addresses           Address[]
+  paymentMethods      PaymentMethod[]
+  orders              Order[]
+  notifications       Notification[]
+  savedTenders        SavedTender[]
+  otpCodes            OtpCode[]
 
   @@map("users")
+}
+
+model PendingUser {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  password  String
+  createdAt DateTime @default(now())
+
+  otpCodes OtpCode[]
+
+  @@map("pending_users")
 }
 
 model Tender {
@@ -46,38 +82,171 @@ model Tender {
   endDate             DateTime
   imageUrl            String
   status              TenderStatus @default(ACTIVE)
-  category            String       @default("כללי")
+  category            String       @default("General")
+  views               Int          @default(0)
+  supplierId          String
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 
+  supplier    User                 @relation("SupplierTenders", fields: [supplierId], references: [id], onDelete: Cascade)
   enrollments CustomerEnrollment[]
   bids        SupplierBid[]
+  tiers       TenderTier[]
+  orders      Order[]
+  notifications Notification[]
+  savedBy       SavedTender[]
 
   @@map("tenders")
 }
 
-model CustomerEnrollment {
-  id        String   @id @default(uuid())
-  tenderId  String
-  userId    String
-  createdAt DateTime @default(now())
+model TenderTier {
+  id              String   @id @default(uuid())
+  tenderId        String
+  minParticipants Int
+  discountPercent Float
+  createdAt       DateTime @default(now())
 
-  tender Tender @relation(fields: [tenderId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  tender Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  @@map("tender_tiers")
+}
+
+model Order {
+  id                String    @id @default(uuid())
+  tenderId          String
+  userId            String
+  finalPrice        Float
+  status            String    @default("PROCESSING") // PROCESSING, SHIPPED, DELIVERED
+  deliveryAddress   String?
+  estimatedDelivery DateTime?
+  deliveryNotes     String?
+  supplierBidId     String?
+  userName          String?   // Human readable snapshot
+  userEmail         String?   // Human readable snapshot
+  tenderTitle       String?   // Human readable snapshot
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  tender     Tender      @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  supplierBid SupplierBid? @relation(fields: [supplierBidId], references: [id], onDelete: SetNull)
+
+  @@map("orders")
+}
+
+model CustomerEnrollment {
+  id          String   @id @default(uuid())
+  tenderId    String
+  userId      String
+  userName    String?  // Human readable snapshot
+  userEmail   String?  // Human readable snapshot
+  tenderTitle String?  // Human readable snapshot
+  createdAt   DateTime @default(now())
+
+  tender Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([tenderId, userId])
   @@map("customer_enrollments")
 }
 
 model SupplierBid {
-  id        String   @id @default(uuid())
-  tenderId  String
-  userId    String
-  bidPrice  Float
-  createdAt DateTime @default(now())
+  id            String    @id @default(uuid())
+  tenderId      String
+  userId        String
+  bidPrice      Float
+  status        BidStatus @default(PENDING)
+  supplierName  String?   // Human readable snapshot
+  supplierEmail String?   // Human readable snapshot
+  tenderTitle   String?   // Human readable snapshot
+  createdAt     DateTime  @default(now())
 
-  tender Tender @relation(fields: [tenderId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  tender Tender  @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
 
   @@map("supplier_bids")
 }
+
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String
+  title       String
+  body        String
+  type        NotificationType
+  tenderId    String?
+  tenderTitle String?          // Human readable snapshot
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tender Tender? @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  label     String   @default("Home")
+  street    String
+  city      String
+  state     String   @default("")
+  zipCode   String?
+  country   String   @default("Israel")
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("addresses")
+}
+
+model PaymentMethod {
+  id          String   @id @default(uuid())
+  userId      String
+  label       String   @default("My Card")
+  last4       String
+  brand       String   @default("Visa")
+  expiryMonth Int
+  expiryYear  Int
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payment_methods")
+}
+
+model SavedTender {
+  id          String   @id @default(uuid())
+  userId      String
+  tenderId    String
+  tenderTitle String?  // Human readable snapshot
+  createdAt   DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tender Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenderId])
+  @@map("saved_tenders")
+}
+
+model OtpCode {
+  id            String   @id @default(uuid())
+  userId        String?
+  pendingUserId String?
+  code          String
+  channel       String   @default("email")
+  expiresAt     DateTime
+  attempts      Int      @default(0)
+  used          Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pendingUser PendingUser? @relation(fields: [pendingUserId], references: [id], onDelete: Cascade)
+
+  @@map("otp_codes")
+}
+

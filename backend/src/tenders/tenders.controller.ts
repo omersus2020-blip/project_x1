@@ -29,4 +29,8 @@ export class TendersController {
     bid(@Param('id') id: string, @Body('userId') userId: string, @Body('bidPrice') bidPrice: number) {
         return this.tendersService.bid(id, userId, bidPrice);
     }
+    @Post(':id/view')
+    async incrementaView(@Param('id') id: string) {
+        return this.tendersService.incrementviews(id);
+    }
 }

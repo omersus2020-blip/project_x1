@@ -1,62 +1,107 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, TenderStatus } from '@prisma/client';
 const prisma = new PrismaClient();
 async function main() {
     console.log('🌱 Seeding database...');
 
-    // Clear existing data (order matters due to foreign keys)
+    // Clear existing data (order matters due to FK constraints)
+    await prisma.notification.deleteMany();
+    await prisma.order.deleteMany();
     await prisma.supplierBid.deleteMany();
     await prisma.customerEnrollment.deleteMany();
+    await prisma.tenderTier.deleteMany();
     await prisma.tender.deleteMany();
-    await prisma.user.deleteMany();
+    // Keep users and addresses if they exist
 
     const now = new Date();
 
-    // Create 1 Dummy Tender
-    const tender = await prisma.tender.create({
-        data: {
-            title: 'Washing Machine',
-            description: 'A brand new high end washing machine.',
-            originalPrice: 1500,
-            currentPrice: 1500,
-            targetParticipants: 10,
-            currentParticipants: 3,
-            endDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
-            imageUrl: 'https://cdn-icons-png.flaticon.com/512/3514/3514491.png',
-            status: 'ACTIVE',
-            category: 'חשמל',
-        }
+    // 1. Create or find a supplier user
+    const supplier = await prisma.user.upsert({
+        where: { email: 'supplier@blip.com' },
+        update: {},
+        create: {
+            name: 'Blip Supplier',
+            email: 'supplier@blip.com',
+            password: '$2b$10$dummyhashedpassword1234567890abc', // placeholder
+            role: 'SUPPLIER',
+        },
     });
-    console.log(`Created Tender: ${tender.title}`);
+    console.log(`✅ Supplier user: ${supplier.name} (${supplier.id})`);
 
-    // Create 3 Customers
-    const customer1 = await prisma.user.create({ data: { name: 'Customer One', email: 'c1@example.com', role: 'CUSTOMER' } });
-    const customer2 = await prisma.user.create({ data: { name: 'Customer Two', email: 'c2@example.com', role: 'CUSTOMER' } });
-    const customer3 = await prisma.user.create({ data: { name: 'Customer Three', email: 'c3@example.com', role: 'CUSTOMER' } });
+    // 2. Create tenders linked to the supplier
+    const tendersData = [
+        {
+            title: 'Sony PlayStation 5 Pro',
+            description: 'The ultimate gaming console. Group buy to get it at wholesale price directly from the importer.',
+            originalPrice: 499,
+            currentPrice: 450,
+            targetParticipants: 100,
+            currentParticipants: 85,
+            endDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days
+            imageUrl: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&q=80&w=800',
+            status: TenderStatus.ACTIVE,
+            category: 'Electronics',
+            supplierId: supplier.id,
+        },
+        {
+            title: 'Dyson V15 Detect Vacuum',
+            description: 'Powerful cordless vacuum with laser illumination. Need 50 buyers to unlock the massive discount!',
+            originalPrice: 750,
+            currentPrice: 590,
+            targetParticipants: 50,
+            currentParticipants: 12,
+            endDate: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000), // 10 days
+            imageUrl: 'https://images.unsplash.com/photo-1558317374-067fb5f30001?auto=format&fit=crop&q=80&w=800',
+            status: TenderStatus.ACTIVE,
+            category: 'Home & Kitchen',
+            supplierId: supplier.id,
+        },
+        {
+            title: 'Samsung 65" 4K OLED TV',
+            description: 'Stunning picture quality. Group buy offer exclusively through this tender.',
+            originalPrice: 1200,
+            currentPrice: 999,
+            targetParticipants: 30,
+            currentParticipants: 28,
+            endDate: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000), // 1 day
+            imageUrl: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&q=80&w=800',
+            status: TenderStatus.ACTIVE,
+            category: 'Electronics',
+            supplierId: supplier.id,
+        },
+        {
+            title: 'Nespresso Vertuo Next',
+            description: 'Coffee and espresso maker with 3 boxes of capsules included.',
+            originalPrice: 180,
+            currentPrice: 135,
+            targetParticipants: 200,
+            currentParticipants: 45,
+            endDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days
+            imageUrl: 'https://images.unsplash.com/photo-1517502884422-41eaead166d4?auto=format&fit=crop&q=80&w=800',
+            status: TenderStatus.ACTIVE,
+            category: 'Home & Kitchen',
+            supplierId: supplier.id,
+        },
+    ];
 
-    // Enroll them in the tender
-    await prisma.customerEnrollment.createMany({
-        data: [
-            { tenderId: tender.id, userId: customer1.id },
-            { tenderId: tender.id, userId: customer2.id },
-            { tenderId: tender.id, userId: customer3.id },
-        ]
-    });
-    console.log(`Created 3 Customers and enrolled them in the tender`);
+    for (const data of tendersData) {
+        const t = await prisma.tender.create({ data });
 
-    // Create 2 Suppliers
-    const supplier1 = await prisma.user.create({ data: { name: 'Supplier One', email: 's1@example.com', role: 'SUPPLIER' } });
-    const supplier2 = await prisma.user.create({ data: { name: 'Supplier Two', email: 's2@example.com', role: 'SUPPLIER' } });
+        // Add 5 price tiers that strictly increase
+        const s = Math.max(1, Math.floor(t.targetParticipants / 5));
+        await prisma.tenderTier.createMany({
+            data: [
+                { tenderId: t.id, minParticipants: s, discountPercent: 0 },
+                { tenderId: t.id, minParticipants: s * 2, discountPercent: 5 },
+                { tenderId: t.id, minParticipants: s * 3, discountPercent: 10 },
+                { tenderId: t.id, minParticipants: s * 4, discountPercent: 15 },
+                { tenderId: t.id, minParticipants: Math.max(s * 5, t.targetParticipants), discountPercent: 20 },
+            ],
+        });
 
-    // Create Supplier Bids
-    await prisma.supplierBid.createMany({
-        data: [
-            { tenderId: tender.id, userId: supplier1.id, bidPrice: 1400 },
-            { tenderId: tender.id, userId: supplier2.id, bidPrice: 1350 },
-        ]
-    });
-    console.log(`Created 2 Suppliers and submitted bids for the tender`);
+        console.log(`Created Tender with Tiers: ${data.title}`);
+    }
 
-    console.log(`✅ Seeding finished.`);
+    console.log(`✅ Seeding finished. Added supplier + 4 tenders with pricing tiers.`);
 }
 
 main()

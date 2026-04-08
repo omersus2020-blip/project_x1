@@ -9,5 +9,6 @@ export class CreateTenderDto {
     endDate: string; // ISO date string
     targetParticipants: number;
     category: string;
+    supplierId: string;
     priceTiers: { minParticipants: number; discountPercent: number }[];
 }
