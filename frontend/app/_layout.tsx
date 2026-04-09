@@ -72,6 +72,14 @@ export default function RootLayout() {
             headerLeft: () => <CustomHeaderBack />,
           }}
         />
+        <Stack.Screen
+          name="tender-checkout"
+          options={{
+            title: 'Checkout',
+            headerTitleStyle: { fontWeight: '700' },
+            headerLeft: () => <CustomHeaderBack />,
+          }}
+        />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />

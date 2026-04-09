@@ -15,12 +15,8 @@ import { AppColors } from '@/constants/theme';
 import { Tender } from '@/constants/types';
 import { useTranslation } from 'react-i18next';
 import { changeAppLanguage } from '@/i18n';
-import { fetchSavedTenders, getStoredUser, SavedTenderFromAPI } from '@/constants/api';
+import { fetchSavedTenders, getStoredUser, SavedTenderFromAPI, fetchEnrolledTenders, fetchUserOrders } from '@/constants/api';
 import { ActivityIndicator } from 'react-native';
-
-// Simulate: user has joined tenders 2 and 5 (active), tender 1 is completed
-const JOINED_ACTIVE_IDS = ['2', '5'];
-const COMPLETED_IDS = ['1'];
 
 function getDiscountPercent(original: number, current: number): number {
     if (original <= 0) return 0;
@@ -47,43 +43,70 @@ export default function MyPurchasesScreen() {
     const router = useRouter();
     const { t, i18n } = useTranslation();
     const [selectedTab, setSelectedTab] = useState<TabType>('active');
-    const [savedTenders, setSavedTenders] = useState<SavedTenderFromAPI[]>([]);
-    const [loadingSaved, setLoadingSaved] = useState(false);
-
-    const activeTenders = MOCK_TENDERS.filter((t) => JOINED_ACTIVE_IDS.includes(t.id));
-    const completedTenders = MOCK_TENDERS.filter((t) => COMPLETED_IDS.includes(t.id));
+    const [savedTenders, setSavedTenders] = useState<any[]>([]);
+    const [activeTenders, setActiveTenders] = useState<any[]>([]);
+    const [completedOrders, setCompletedOrders] = useState<any[]>([]);
+    const [loadingTab, setLoadingTab] = useState(false);
 
     React.useEffect(() => {
-        if (selectedTab === 'saved') {
-            loadSavedTenders();
-        }
+        loadDataForTab(selectedTab);
     }, [selectedTab]);
 
-    const loadSavedTenders = async () => {
+    const loadDataForTab = async (tab: TabType) => {
         try {
-            setLoadingSaved(true);
+            setLoadingTab(true);
             const user = await getStoredUser();
-            if (user) {
+            if (!user) return;
+
+            if (tab === 'saved') {
                 const data = await fetchSavedTenders(user.id);
                 setSavedTenders(data);
+            } else if (tab === 'active') {
+                const items = await fetchEnrolledTenders(user.id);
+                setActiveTenders(items.filter((item: any) => item.tender?.status === 'ACTIVE'));
+            } else if (tab === 'completed') {
+                const items = await fetchUserOrders(user.id);
+                setCompletedOrders(items);
             }
         } catch (error) {
-            console.error('Failed to load saved tenders', error);
+            console.error(`Failed to load data for tab ${tab}`, error);
         } finally {
-            setLoadingSaved(false);
+            setLoadingTab(false);
         }
     };
 
     const getDisplayedData = (): any[] => {
-        if (selectedTab === 'active') return activeTenders;
-        if (selectedTab === 'completed') return completedTenders;
-        return savedTenders.map(st => ({
+        if (selectedTab === 'active') {
+            return activeTenders.map(item => ({
+                ...item.tender,
+                startingPrice: item.tender.originalPrice, 
+                targetPrice: item.tender.tiers && item.tender.tiers.length > 0 
+                    ? item.tender.originalPrice * (1 - Math.max(...item.tender.tiers.map((t: any) => t.discountPercent)) / 100)
+                    : item.tender.originalPrice,
+                priceTiers: item.tender.tiers?.map((t: any) => ({
+                    minParticipants: t.minParticipants,
+                    discountPercent: t.discountPercent
+                })) || [],
+                enrollmentInfo: item
+            }));
+        }
+        if (selectedTab === 'completed') {
+            return completedOrders.map(order => ({
+                ...order.tender,
+                startingPrice: order.tender?.originalPrice || 0,
+                currentPrice: order.finalPrice,
+                targetPrice: order.finalPrice,
+                status: 'CLOSED',
+                orderInfo: order
+            }));
+        }
+        return savedTenders.map((st: any) => ({
             ...st.tender,
             startingPrice: st.tender.originalPrice, 
             targetPrice: st.tender.tiers && st.tender.tiers.length > 0 
-                ? st.tender.originalPrice * (1 - Math.max(...st.tender.tiers.map(t => t.discountPercent)) / 100)
+                ? st.tender.originalPrice * (1 - Math.max(...st.tender.tiers.map((t: any) => t.discountPercent)) / 100)
                 : st.tender.originalPrice,
-            priceTiers: st.tender.tiers?.map(t => ({
+            priceTiers: st.tender.tiers?.map((t: any) => ({
                 minParticipants: t.minParticipants,
                 discountPercent: t.discountPercent
             })) || [],
@@ -104,10 +127,10 @@ export default function MyPurchasesScreen() {
         router.push({ pathname: '/tender-details', params: { id: tender.id } });
     };
 
-    const renderPurchaseCard = ({ item }: { item: Tender }) => {
+    const renderPurchaseCard = ({ item }: { item: any }) => {
         const discount = getDiscountPercent(item.startingPrice, item.currentPrice);
-        const progressPercent = Math.min(100, (item.currentParticipants / item.targetParticipants) * 100);
-        const timeInfo = formatTimeLeft(item.endDate, t);
+        const progressPercent = Math.min(100, (item.currentParticipants / (item.targetParticipants || 1)) * 100);
+        const timeInfo = item.endDate ? formatTimeLeft(item.endDate, t) : null;
 
         return (
             <Pressable
@@ -146,15 +169,24 @@ export default function MyPurchasesScreen() {
                                     <Text style={styles.metaBold}>{item.currentParticipants}/{item.targetParticipants}</Text> {t('tender.people', 'people')}
                                 </Text>
                             </View>
-                            <View style={styles.timeInfo}>
-                                <MaterialIcons name="access-time" size={14} color={AppColors.textSecondary} />
-                                <Text style={styles.metaText}>{timeInfo.text}</Text>
-                            </View>
+                            {timeInfo && (
+                                <View style={styles.timeInfo}>
+                                    <MaterialIcons name="access-time" size={14} color={AppColors.textSecondary} />
+                                    <Text style={styles.metaText}>{timeInfo.text}</Text>
+                                </View>
+                            )}
                         </View>
 
-                        <View style={styles.progressContainer}>
-                            <View style={[styles.progressBar, { width: `${progressPercent}%` }]} />
-                        </View>
+                        {selectedTab === 'active' && (
+                            <View style={styles.progressContainer}>
+                                <View style={[styles.progressBar, { width: `${progressPercent}%` }]} />
+                            </View>
+                        )}
+                        {selectedTab === 'completed' && item.orderInfo && (
+                            <View style={{ marginTop: 8 }}>
+                                <Text style={{ fontSize: 13, color: AppColors.textSecondary }}>Order Status: <Text style={{ fontWeight: '600', color: AppColors.priceGreen }}>{item.orderInfo.status}</Text></Text>
+                            </View>
+                        )}
                     </View>
                 </View>
             </Pressable>
@@ -223,7 +255,7 @@ export default function MyPurchasesScreen() {
                                         selectedTab === 'completed' && styles.tabButtonTextActive,
                                     ]}
                                 >
-                                    {t('purchases.completed_tab', 'Completed')} ({completedTenders.length})
+                                    {t('purchases.completed_tab', 'Completed')} ({completedOrders.length})
                                 </Text>
                             </Pressable>
                             <Pressable
@@ -246,7 +278,7 @@ export default function MyPurchasesScreen() {
                     </>
                 }
                 ListEmptyComponent={
-                    loadingSaved && selectedTab === 'saved' ? (
+                    loadingTab ? (
                         <View style={styles.emptyState}>
                             <ActivityIndicator size="large" color={AppColors.textPrimary} />
                         </View>

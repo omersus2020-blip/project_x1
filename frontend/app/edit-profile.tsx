@@ -87,7 +87,7 @@ export default function EditProfileScreen() {
                             <Text style={[styles.label, alignStyle]}>{t('edit_profile.full_name', 'Full Name')}</Text>
                             <View style={[styles.inputContainer, rowStyle]}>
                                 <MaterialIcons name="person-outline" size={20} color={AppColors.textMuted} />
-                                <TextInput style={[styles.input, alignStyle]} value={name} onChangeText={setName} placeholder={t('edit_profile.placeholder_name', 'Your name')} placeholderTextColor={AppColors.textMuted} />
+                                <TextInput style={[styles.input, alignStyle, Platform.OS === 'web' && { outlineStyle: 'none' } as any]} value={name} onChangeText={setName} placeholder={t('edit_profile.placeholder_name', 'Your name')} placeholderTextColor={AppColors.textMuted} />
                             </View>
                         </View>
 
@@ -99,7 +99,7 @@ export default function EditProfileScreen() {
                                 </View>
                                 <TextInput
                                     key={email ? 'active' : 'loading'}
-                                    style={[styles.input, alignStyle]}
+                                    style={[styles.input, alignStyle, Platform.OS === 'web' && { outlineStyle: 'none' } as any]}
                                     value={email}
                                     onChangeText={setEmail}
                                     placeholder={t('edit_profile.placeholder_email', 'Your email')}

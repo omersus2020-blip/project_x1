@@ -274,11 +274,36 @@ export async function fetchTenderById(id: string): Promise<TenderFromAPI> {
     return response.json();
 }
 
-export async function enrollTender(id: string, userId: string) {
+export async function enrollTender(
+    id: string,
+    userId: string,
+    quantity: number = 1,
+    addressId?: string,
+    paymentMethodId?: string
+) {
     return authFetch(`${API_URL}/tenders/${id}/enroll`, {
         method: 'POST',
+        body: JSON.stringify({ userId, quantity, addressId, paymentMethodId }),
+    });
+}
+
+export async function cancelEnrollment(id: string, userId: string) {
+    return authFetch(`${API_URL}/tenders/${id}/enroll`, {
+        method: 'DELETE',
         body: JSON.stringify({ userId }),
     });
+}
+
+export async function fetchEnrolledTenders(userId: string) {
+    return authFetch(`${API_URL}/tenders/enrolled/${userId}`);
+}
+
+export async function fetchUserOrders(userId: string) {
+    return authFetch(`${API_URL}/orders/user/${userId}`);
+}
+
+export async function fetchEnrollmentStatus(id: string, userId: string) {
+    return authFetch(`${API_URL}/tenders/${id}/enrollment-status/${userId}`);
 }
 
 // ─── Notifications functions ──────────────────────────────

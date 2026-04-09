@@ -10,7 +10,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AppColors } from '@/constants/theme';
-import { fetchTenderById, enrollTender, TenderFromAPI, getStoredUser, isTenderSaved, toggleSaveTender } from '@/constants/api';
+import { fetchTenderById, TenderFromAPI, getStoredUser, isTenderSaved, toggleSaveTender, fetchEnrollmentStatus, cancelEnrollment } from '@/constants/api';
 import { ActivityIndicator, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { incrementTenderViews } from '@/constants/api';
@@ -52,6 +52,7 @@ export default function TenderDetailsScreen() {
     const [enrolling, setEnrolling] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [enrollmentStatus, setEnrollmentStatus] = useState<any>(null);
 
     // Call hook unconditionally BEFORE any early returns
     const countdown = useCountdown(tender?.endDate);
@@ -74,11 +75,15 @@ export default function TenderDetailsScreen() {
             const data = await fetchTenderById(id);
             setTender(data);
 
-            // Check if saved
+            // Check if saved & enrolled
             const user = await getStoredUser();
             if (user?.id && id) {
-                const res = await isTenderSaved(id, user.id);
-                setIsSaved(res.isSaved);
+                const [saveRes, enrollRes] = await Promise.all([
+                    isTenderSaved(id as string, user.id),
+                    fetchEnrollmentStatus(id as string, user.id)
+                ]);
+                setIsSaved(saveRes.isSaved);
+                setEnrollmentStatus(enrollRes.isEnrolled ? enrollRes : null);
             }
         } catch (error) {
             console.error('Failed to load tender', error);
@@ -88,21 +93,41 @@ export default function TenderDetailsScreen() {
     };
 
     const handleJoin = async () => {
-        try {
-            setEnrolling(true);
-            const user = await getStoredUser();
-            if (!user) {
-                Alert.alert(t('auth.signin_required', "Sign In Required"), t('auth.please_signin', "Please sign in to join this tender."));
-                return;
-            }
-            await enrollTender(id, user.id);
-            Alert.alert(t('common.success', "Success!"), t('tender.join_success', "You have successfully joined the group deal!"));
-            await loadTender(); // Refresh data after joining
-        } catch (error: any) {
-            Alert.alert(t('common.error', "Error"), error.message || t('tender.join_failed', "Failed to join tender"));
-        } finally {
-            setEnrolling(false);
+        const user = await getStoredUser();
+        if (!user) {
+            Alert.alert(t('auth.signin_required', "Sign In Required"), t('auth.please_signin', "Please sign in to join this tender."));
+            return;
         }
+        router.push({ pathname: '/tender-checkout' as any, params: { id: id as string } });
+    };
+
+    const handleLeave = async () => {
+        const user = await getStoredUser();
+        if (!user) return;
+
+        Alert.alert(
+            t('tender.leave_title', 'Leave Deal?'),
+            t('tender.leave_confirm', 'Are you sure you want to leave this deal? A 5% cancellation fee will apply to your payment method.'),
+            [
+                { text: t('common.cancel', 'Cancel'), style: 'cancel' },
+                {
+                    text: t('tender.leave_btn', 'Leave Deal'),
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setEnrolling(true);
+                            await cancelEnrollment(id as string, user.id);
+                            Alert.alert(t('common.success', "Cancelled"), t('tender.leave_success', "You have left the group deal."));
+                            await loadTender();
+                        } catch (error: any) {
+                            Alert.alert(t('common.error', "Error"), error.message || t('tender.leave_failed', "Failed to leave tender"));
+                        } finally {
+                            setEnrolling(false);
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const handleToggleSave = async () => {
@@ -165,6 +190,10 @@ export default function TenderDetailsScreen() {
                                 <Text style={styles.discountText}>-{discount}%</Text>
                             </View>
                         )}
+                        <View style={styles.viewsBadge}>
+                            <MaterialIcons name="visibility" size={16} color="#FFFFFF" />
+                            <Text style={styles.viewsText}>{(tender as any)?.views || 0}</Text>
+                        </View>
                     </View>
 
                     {/* Title + Category */}
@@ -178,29 +207,23 @@ export default function TenderDetailsScreen() {
                         <Text style={styles.description}>{tender.description}</Text>
                     </View>
 
-                    <Text style={styles.description}>{tender.description}</Text>
-
-                    <Text style={{ fontSize: 12, color: '#666', marginTop: 8 }}>
-                        👀 {(tender as any)?.views || 0} views
-                    </Text>
-
                     {/* Price section */}
                     <View style={styles.priceSection}>
                         <View style={styles.priceCol}>
                             <Text style={styles.priceLabel}>{t('tender.current_price', 'Current Price')}</Text>
-                            <Text style={styles.currentPrice}>${tender.currentPrice.toFixed(2)}</Text>
+                            <Text style={styles.currentPrice} adjustsFontSizeToFit={true} numberOfLines={1}>${tender.currentPrice.toFixed(2)}</Text>
                         </View>
                         <View style={styles.priceDivider} />
                         <View style={styles.priceCol}>
                             <Text style={styles.priceLabel}>{t('tender.regular_price', 'Regular Price')}</Text>
-                            <Text style={styles.originalPrice}>${tender.originalPrice.toFixed(2)}</Text>
+                            <Text style={styles.originalPrice} adjustsFontSizeToFit={true} numberOfLines={1}>${tender.originalPrice.toFixed(2)}</Text>
                         </View>
                         {savings > 0 && (
                             <>
                                 <View style={styles.priceDivider} />
                                 <View style={styles.priceCol}>
                                     <Text style={styles.priceLabel}>{t('tender.you_save', 'You Save')}</Text>
-                                    <Text style={styles.savingsPrice}>${savings.toFixed(2)}</Text>
+                                    <Text style={styles.savingsPrice} adjustsFontSizeToFit={true} numberOfLines={1}>${savings.toFixed(2)}</Text>
                                 </View>
                             </>
                         )}
@@ -242,24 +265,34 @@ export default function TenderDetailsScreen() {
                                 i === arr.length - 1 ||
                                 tender.currentParticipants < arr[i + 1].minParticipants
                             );
+                            const tierPrice = tender.originalPrice * (1 - tier.discountPercent / 100);
                             return (
                                 <View key={i} style={styles.ladderStep}>
                                     <View style={[
                                         styles.ladderBar,
                                         {
-                                            height: 20 + tier.discountPercent * 1.8,
+                                            height: 50 + tier.discountPercent * 2,
                                             backgroundColor: isReached ? AppColors.priceGreen : '#E5E7EB',
+                                            justifyContent: 'center'
                                         },
                                         isCurrent && styles.ladderBarCurrent,
                                     ]}>
                                         <Text style={[
                                             styles.ladderPercent,
                                             !isReached && { color: AppColors.textMuted },
+                                            { fontSize: 11, marginBottom: 2 }
                                         ]}>
-                                            {tier.discountPercent}%
+                                            -{tier.discountPercent}%
+                                        </Text>
+                                        <Text style={[
+                                            styles.ladderPercent,
+                                            !isReached && { color: AppColors.textMuted },
+                                            { fontSize: 13, fontWeight: '800' }
+                                        ]}>
+                                            ${tierPrice.toFixed(0)}
                                         </Text>
                                     </View>
-                                    <Text style={styles.ladderPeople}>{tier.minParticipants}</Text>
+                                    <Text style={styles.ladderPeople}>{tier.minParticipants} <MaterialIcons name="person" size={10} /></Text>
                                 </View>
                             );
                         })}
@@ -323,21 +356,40 @@ export default function TenderDetailsScreen() {
 
                 {/* CTA Buttons */}
                 <View style={styles.ctaSection}>
-                    <Pressable
-                        style={({ pressed }) => [styles.primaryCta, pressed && { opacity: 0.9 }, enrolling && { opacity: 0.7 }]}
-                        id="join-tender-btn"
-                        onPress={handleJoin}
-                        disabled={enrolling}
-                    >
-                        {enrolling ? (
-                            <ActivityIndicator color="#FFFFFF" size="small" />
-                        ) : (
-                            <>
-                                <MaterialIcons name="group-add" size={22} color="#FFFFFF" />
-                                <Text style={styles.primaryCtaText}>{t('tender.join_deal', 'Join This Group Deal')}</Text>
-                            </>
-                        )}
-                    </Pressable>
+                    {enrollmentStatus ? (
+                        <Pressable
+                            style={({ pressed }) => [styles.primaryCta, { backgroundColor: '#FEE2E2' }, pressed && { opacity: 0.9 }, enrolling && { opacity: 0.7 }]}
+                            onPress={handleLeave}
+                            disabled={enrolling}
+                        >
+                            {enrolling ? (
+                                <ActivityIndicator color="#EF4444" size="small" />
+                            ) : (
+                                <>
+                                    <MaterialIcons name="exit-to-app" size={22} color="#EF4444" />
+                                    <Text style={[styles.primaryCtaText, { color: '#EF4444' }]}>
+                                        {t('tender.leave_deal', 'Leave Group Deal')}
+                                    </Text>
+                                </>
+                            )}
+                        </Pressable>
+                    ) : (
+                        <Pressable
+                            style={({ pressed }) => [styles.primaryCta, pressed && { opacity: 0.9 }, enrolling && { opacity: 0.7 }]}
+                            id="join-tender-btn"
+                            onPress={handleJoin}
+                            disabled={enrolling}
+                        >
+                            {enrolling ? (
+                                <ActivityIndicator color="#FFFFFF" size="small" />
+                            ) : (
+                                <>
+                                    <MaterialIcons name="group-add" size={22} color="#FFFFFF" />
+                                    <Text style={styles.primaryCtaText}>{t('tender.join_deal', 'Join This Group Deal')}</Text>
+                                </>
+                            )}
+                        </Pressable>
+                    )}
 
                     <Pressable
                         style={({ pressed }) => [
@@ -478,6 +530,23 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         marginTop: 8,
     },
+    viewsBadge: {
+        position: 'absolute',
+        top: 16,
+        right: 16,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    viewsText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '700',
+    },
 
     // Price section
     priceSection: {
@@ -486,6 +555,7 @@ const styles = StyleSheet.create({
         borderTopColor: '#F3F4F6',
         paddingVertical: 16,
         paddingHorizontal: 20,
+        marginTop: 12,
     },
     priceCol: {
         flex: 1,
@@ -581,18 +651,21 @@ const styles = StyleSheet.create({
     ladderContainer: {
         flexDirection: 'row',
         alignItems: 'flex-end',
-        gap: 10,
+        justifyContent: 'space-between',
+        gap: 8,
         marginBottom: 16,
     },
     ladderStep: {
         alignItems: 'center',
+        flex: 1,
     },
     ladderBar: {
-        width: 44,
+        width: '100%',
+        maxWidth: 64,
         borderRadius: 8,
         justifyContent: 'center',
         alignItems: 'center',
-        minHeight: 24,
+        minHeight: 50,
     },
     ladderBarCurrent: {
         borderWidth: 2,

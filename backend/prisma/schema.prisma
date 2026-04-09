@@ -116,6 +116,8 @@ model Order {
   tenderId          String
   userId            String
   finalPrice        Float
+  quantity          Int       @default(1)
+  totalPrice        Float?    // finalPrice * quantity
   status            String    @default("PROCESSING") // PROCESSING, SHIPPED, DELIVERED
   deliveryAddress   String?
   estimatedDelivery DateTime?
@@ -135,13 +137,16 @@ model Order {
 }
 
 model CustomerEnrollment {
-  id          String   @id @default(uuid())
-  tenderId    String
-  userId      String
-  userName    String?  // Human readable snapshot
-  userEmail   String?  // Human readable snapshot
-  tenderTitle String?  // Human readable snapshot
-  createdAt   DateTime @default(now())
+  id              String   @id @default(uuid())
+  tenderId        String
+  userId          String
+  quantity        Int      @default(1)  // Max 3 per tender
+  addressId       String?  // Selected delivery address
+  paymentMethodId String?  // Selected payment method
+  userName        String?  // Human readable snapshot
+  userEmail       String?  // Human readable snapshot
+  tenderTitle     String?  // Human readable snapshot
+  createdAt       DateTime @default(now())
 
   tender Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

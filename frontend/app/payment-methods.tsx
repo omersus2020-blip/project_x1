@@ -134,7 +134,7 @@ export default function PaymentMethodsScreen() {
                         <View style={[styles.modalInput, rowStyle]}>
                             <MaterialIcons name="credit-card" size={18} color={AppColors.textMuted} />
                             <TextInput
-                                style={[styles.modalInputText, alignStyle]}
+                                style={[styles.modalInputText, alignStyle, Platform.OS === 'web' && { outlineStyle: 'none' } as any]}
                                 placeholder={t('payment.last4', 'Last 4 digits')}
                                 placeholderTextColor={AppColors.textMuted}
                                 keyboardType="number-pad"
@@ -145,9 +145,9 @@ export default function PaymentMethodsScreen() {
                         </View>
 
                         <View style={[styles.expiryRow, rowStyle]}>
-                            <View style={[styles.modalInput, { flex: 1 }]}>
+                            <View style={[styles.modalInput, { flex: 1 }, rowStyle]}>
                                 <TextInput
-                                    style={[styles.modalInputText, alignStyle, { textAlign: 'center' }]}
+                                    style={[styles.modalInputText, alignStyle, { textAlign: 'center' }, Platform.OS === 'web' && { outlineStyle: 'none' } as any]}
                                     placeholder={t('payment.mm', 'MM')}
                                     placeholderTextColor={AppColors.textMuted}
                                     keyboardType="number-pad"
@@ -157,9 +157,9 @@ export default function PaymentMethodsScreen() {
                                 />
                             </View>
                             <Text style={styles.expirySeparator}>/</Text>
-                            <View style={[styles.modalInput, { flex: 1 }]}>
+                            <View style={[styles.modalInput, { flex: 1 }, rowStyle]}>
                                 <TextInput
-                                    style={[styles.modalInputText, alignStyle, { textAlign: 'center' }]}
+                                    style={[styles.modalInputText, alignStyle, { textAlign: 'center' }, Platform.OS === 'web' && { outlineStyle: 'none' } as any]}
                                     placeholder={t('payment.yyyy', 'YYYY')}
                                     placeholderTextColor={AppColors.textMuted}
                                     keyboardType="number-pad"

@@ -75,10 +75,19 @@ export class TenderTasksService {
             // 3. Create Orders for all enrolled customers
             if (tender.enrollments.length > 0) {
                 for (const enrollment of tender.enrollments) {
-                    const defaultAddress = enrollment.user.addresses[0];
-                    const addressStr = defaultAddress
-                        ? `${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.country}`
-                        : null;
+                    let addressStr: string | null = null;
+                    if (enrollment.addressId) {
+                        const addr = await this.prisma.address.findUnique({ where: { id: enrollment.addressId } });
+                        if (addr) {
+                            addressStr = `${addr.street}, ${addr.city}, ${addr.country}`;
+                        }
+                    }
+                    if (!addressStr) {
+                        const defaultAddress = enrollment.user.addresses[0];
+                        addressStr = defaultAddress
+                            ? `${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.country}`
+                            : null;
+                    }
 
                     // Estimated delivery: 7 days from now
                     const estimatedDelivery = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -88,6 +97,8 @@ export class TenderTasksService {
                             tenderId: tender.id,
                             userId: enrollment.userId,
                             finalPrice: tender.currentPrice,
+                            quantity: enrollment.quantity,
+                            totalPrice: tender.currentPrice * enrollment.quantity,
                             status: 'PROCESSING',
                             deliveryAddress: addressStr,
                             estimatedDelivery: estimatedDelivery,
@@ -104,7 +115,7 @@ export class TenderTasksService {
                         data: {
                             userId: enrollment.userId,
                             title: `Your order for "${tender.title}" is confirmed!`,
-                            body: `Congratulations! The tender has ended. Your final price is $${tender.currentPrice.toFixed(2)}. `
+                            body: `Congratulations! The tender has ended. Your final price is $${tender.currentPrice.toFixed(2)} each ($${(tender.currentPrice * enrollment.quantity).toFixed(2)} total for ${enrollment.quantity} items). `
                                 + (addressStr
                                     ? `Delivery to: ${addressStr}. `
                                     : `Please add a delivery address in your profile. `)
@@ -130,13 +141,16 @@ export class TenderTasksService {
                 }).join('\n');
 
                 // Notify the winning supplier
+                const totalRevenue = tender.enrollments.reduce((sum, e) => sum + (tender.currentPrice * e.quantity), 0);
+                const totalQuantity = tender.enrollments.reduce((sum, e) => sum + e.quantity, 0);
+
                 await this.prisma.notification.create({
                     data: {
                         userId: winningBid.userId,
                         title: `You won the tender: "${tender.title}"!`,
                         body: `Your bid of $${winningBid.bidPrice.toFixed(2)} won! `
-                            + `${tender.enrollments.length} customer(s) enrolled. `
-                            + `Total revenue: $${(tender.currentPrice * tender.enrollments.length).toFixed(2)}.\n\n`
+                            + `${tender.enrollments.length} customer(s) ordered ${totalQuantity} items total. `
+                            + `Total revenue: $${totalRevenue.toFixed(2)}.\n\n`
                             + `Enrolled customers:\n${enrolledUsersSummary || 'None'}`,
                         type: NotificationType.TENDER_WON,
                         tenderId: tender.id,
@@ -153,7 +167,7 @@ export class TenderTasksService {
                     data: {
                         userId: tender.supplierId,
                         title: `Your tender "${tender.title}" has completed`,
-                        body: `${tender.enrollments.length} customer(s) enrolled at final price $${tender.currentPrice.toFixed(2)}. `
+                        body: `${tender.enrollments.length} customer(s) ordered ${tender.enrollments.reduce((sum, e) => sum + e.quantity, 0)} items at final price $${tender.currentPrice.toFixed(2)}. `
                             + (winningBid
                                 ? `Winning supplier bid: $${winningBid.bidPrice.toFixed(2)}.`
                                 : `No supplier bids were received.`),

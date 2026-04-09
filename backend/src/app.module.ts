@@ -10,6 +10,7 @@ import { PaymentMethodsModule } from './payment-methods/payment-methods.module.j
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { SavedTendersModule } from './tenders/saved-tenders.module.js';
 import { OtpModule } from './otp/otp.module.js';
+import { OrdersModule } from './orders/orders.module.js';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { OtpModule } from './otp/otp.module.js';
     NotificationsModule,
     SavedTendersModule,
     OtpModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

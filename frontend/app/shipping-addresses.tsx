@@ -9,7 +9,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AppColors } from '@/constants/theme';
 import { fetchAddresses, createAddress, deleteAddress } from '@/constants/api';
 import { useTranslation } from 'react-i18next';
-
+import AutocompleteInput from '@/components/AutocompleteInput';
 interface Address {
     id: string; label: string; street: string; city: string;
     state: string; country: string; isDefault: boolean;
@@ -121,21 +121,22 @@ export default function ShippingAddressesScreen() {
                     <View style={styles.modal}>
                         <Text style={[styles.modalTitle, alignStyle]}>{t('shipping.new_address', 'New Address')}</Text>
                         {[
-                            { key: 'label', placeholder: t('shipping.label', 'Label (e.g. Home, Work)'), icon: 'label' },
-                            { key: 'street', placeholder: t('shipping.street', 'Street address'), icon: 'home' },
-                            { key: 'city', placeholder: t('shipping.city', 'City'), icon: 'location-city' },
                             { key: 'country', placeholder: t('shipping.country', 'Country'), icon: 'flag' },
-                        ].map(({ key, placeholder, icon }) => (
-                            <View key={key} style={[styles.modalInput, rowStyle]}>
-                                <MaterialIcons name={icon as any} size={18} color={AppColors.textMuted} />
-                                <TextInput
-                                    style={[styles.modalInputText, alignStyle]}
-                                    placeholder={placeholder}
-                                    placeholderTextColor={AppColors.textMuted}
-                                    value={(form as any)[key]}
-                                    onChangeText={(v) => setForm({ ...form, [key]: v })}
-                                />
-                            </View>
+                            { key: 'city', placeholder: t('shipping.city', 'City'), icon: 'location-city' },
+                            { key: 'street', placeholder: t('shipping.street', 'Street address'), icon: 'home' },
+                            { key: 'label', placeholder: t('shipping.notes', 'Specific notes'), icon: 'note' },
+                        ].map(({ key, placeholder, icon }, index) => (
+                            <AutocompleteInput
+                                key={key}
+                                type={key as 'label' | 'street' | 'city' | 'country'}
+                                value={(form as any)[key]}
+                                onChangeText={(v) => setForm({ ...form, [key]: v })}
+                                placeholder={placeholder}
+                                icon={icon}
+                                alignStyle={alignStyle}
+                                rowStyle={rowStyle}
+                                zIndex={20 - index}
+                            />
                         ))}
                         <View style={[styles.modalActions, rowStyle]}>
                             <Pressable style={styles.cancelBtn} onPress={() => setShowModal(false)}>
