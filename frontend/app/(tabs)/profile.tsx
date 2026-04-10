@@ -41,6 +41,8 @@ export default function ProfileScreen() {
     const { t, i18n } = useTranslation();
     const [user, setUser] = useState<any>(null);
 
+    const isRtl = i18n.language === 'he' || i18n.language === 'ar';
+
     const settingsItems = [
         { id: 's1', icon: 'person-outline', title: t('profile.edit_profile', 'Edit Profile'), subtitle: t('profile.update_personal', 'Update your personal information'), route: '/edit-profile' },
         { id: 's2', icon: 'location-on', title: t('profile.shipping', 'Shipping Addresses'), subtitle: t('profile.manage_shipping', 'Manage delivery locations'), route: '/shipping-addresses' },
@@ -128,25 +130,30 @@ export default function ProfileScreen() {
                         style={({ pressed }) => [
                             styles.menuItem,
                             pressed && { backgroundColor: '#F9FAFB' },
+                            { flexDirection: isRtl ? 'row-reverse' : 'row' }
                         ]}
                         onPress={() => router.push(item.route as any)}
                     >
-                        <View style={styles.menuIconContainer}>
+                        <View style={[styles.menuIconContainer, { [isRtl ? 'marginLeft' : 'marginEnd']: 14 }]}>
                             <MaterialIcons name={item.icon as any} size={22} color={AppColors.textPrimary} />
                         </View>
-                        <View style={styles.menuTextContainer}>
-                            <Text style={styles.menuTitle}>{item.title}</Text>
-                            <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
+                        <View style={[styles.menuTextContainer, { alignItems: isRtl ? 'flex-end' : 'flex-start' }]}>
+                            <Text style={[styles.menuTitle, { textAlign: isRtl ? 'right' : 'left' }]}>{item.title}</Text>
+                            <Text style={[styles.menuSubtitle, { textAlign: isRtl ? 'right' : 'left' }]}>{item.subtitle}</Text>
                         </View>
-                        <MaterialIcons name="chevron-right" size={22} color={AppColors.textMuted} />
+                        <MaterialIcons name={isRtl ? "chevron-left" : "chevron-right"} size={22} color={AppColors.textMuted} />
                     </Pressable>
                 )}
                 ListFooterComponent={
                     <Pressable
-                        style={({ pressed }) => [styles.signOutButton, pressed && { opacity: 0.9 }]}
+                        style={({ pressed }) => [
+                            styles.signOutButton, 
+                            pressed && { opacity: 0.9 },
+                            { flexDirection: isRtl ? 'row-reverse' : 'row' }
+                        ]}
                         onPress={handleSignOut}
                     >
-                        <MaterialIcons name="logout" size={20} color="#EF4444" />
+                        <MaterialIcons name="logout" size={20} color="#EF4444" style={isRtl ? { transform: [{ scaleX: -1 }] } : {}} />
                         <Text style={styles.signOutText}>{t('profile.sign_out', 'Sign Out')}</Text>
                     </Pressable>
                 }
@@ -246,7 +253,6 @@ const styles = StyleSheet.create({
 
     // Settings menu items
     menuItem: {
-        flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: AppColors.cardBackground,
         marginHorizontal: 16,
@@ -263,7 +269,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#F3F4F6',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 14,
     },
     menuTextContainer: {
         flex: 1,
@@ -282,7 +287,6 @@ const styles = StyleSheet.create({
 
     // Sign out
     signOutButton: {
-        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,

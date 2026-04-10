@@ -16,4 +16,29 @@ export class RegisterDto {
     @IsString()
     @IsOptional()
     phone?: string;
+
+    // Supplier specific fields
+    @IsString()
+    @IsOptional()
+    companyNumber?: string;
+
+    @IsString()
+    @IsOptional()
+    bankAccount?: string;
+
+    @IsString()
+    @IsOptional()
+    businessAddress?: string;
+
+    @IsString()
+    @IsOptional()
+    businessSector?: string;
+
+    @IsString()
+    @IsOptional()
+    contactName?: string;
+
+    @IsString()
+    @IsOptional()
+    contactPhone?: string;
 }

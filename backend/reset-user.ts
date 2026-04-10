@@ -24,7 +24,13 @@ async function main() {
     await prisma.savedTender.deleteMany({ where: { userId: user.id } });
     await prisma.order.deleteMany({ where: { userId: user.id } });
     await prisma.customerEnrollment.deleteMany({ where: { userId: user.id } });
-    await prisma.supplierBid.deleteMany({ where: { userId: user.id } });
+    // Handle Supplier-specific data
+    const supplier = await (prisma as any).supplier.findUnique({ where: { userId: user.id } });
+    if (supplier) {
+        await (prisma as any).supplierBid.deleteMany({ where: { supplierId: supplier.id } });
+        await (prisma as any).supplier.delete({ where: { id: supplier.id } });
+        console.log('✅ Cleaned up Supplier profile and bids');
+    }
     await prisma.address.deleteMany({ where: { userId: user.id } });
     await prisma.paymentMethod.deleteMany({ where: { userId: user.id } });
     await prisma.otpCode.deleteMany({ where: { userId: user.id } });

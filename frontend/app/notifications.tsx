@@ -12,11 +12,15 @@ import {
 import { fetchUserNotifications, markNotificationAsRead, NotificationFromAPI, getStoredUser } from '@/constants/api';
 import { AppColors } from '@/constants/theme';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useTranslation } from 'react-i18next';
 
 export default function NotificationsScreen() {
     const [notifications, setNotifications] = useState<NotificationFromAPI[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const { i18n } = useTranslation();
+
+    const isRtl = i18n.language === 'he' || i18n.language === 'ar';
 
     useEffect(() => {
         loadData();
@@ -75,21 +79,26 @@ export default function NotificationsScreen() {
             <Pressable
                 style={[
                     styles.card,
-                    isUnread && styles.cardUnread
+                    isUnread && styles.cardUnread,
+                    { flexDirection: isRtl ? 'row-reverse' : 'row' }
                 ]}
                 onPress={() => handlePressNotification(item)}
             >
-                <View style={[styles.iconContainer, isUnread && styles.iconContainerUnread]}>
+                <View style={[
+                    styles.iconContainer, 
+                    isUnread && styles.iconContainerUnread,
+                    { [isRtl ? 'marginLeft' : 'marginRight']: 12 }
+                ]}>
                     <MaterialIcons name={iconName} size={24} color={isUnread ? '#EF4444' : AppColors.textSecondary} />
                 </View>
-                <View style={styles.contentContainer}>
-                    <Text style={[styles.title, isUnread && styles.titleUnread]}>{item.title}</Text>
-                    <Text style={styles.body}>{item.body}</Text>
-                    <Text style={styles.timestamp}>
+                <View style={[styles.contentContainer, { alignItems: isRtl ? 'flex-end' : 'flex-start' }]}>
+                    <Text style={[styles.title, isUnread && styles.titleUnread, { textAlign: isRtl ? 'right' : 'left' }]}>{item.title}</Text>
+                    <Text style={[styles.body, { textAlign: isRtl ? 'right' : 'left' }]}>{item.body}</Text>
+                    <Text style={[styles.timestamp, { textAlign: isRtl ? 'right' : 'left' }]}>
                         {new Date(item.createdAt).toLocaleDateString()} {new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </Text>
                 </View>
-                {isUnread && <View style={styles.unreadDot} />}
+                {isUnread && <View style={[styles.unreadDot, { [isRtl ? 'marginRight' : 'marginLeft']: 8 }]} />}
             </Pressable>
         );
     };
@@ -131,7 +140,6 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     card: {
-        flexDirection: 'row',
         backgroundColor: '#FFFFFF',
         borderRadius: 12,
         padding: 16,
@@ -154,7 +162,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#F3F4F6',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
     },
     iconContainerUnread: {
         backgroundColor: '#FEE2E2',
@@ -187,7 +194,6 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         backgroundColor: '#EF4444',
         alignSelf: 'center',
-        marginLeft: 8,
     },
     emptyState: {
         alignItems: 'center',

@@ -34,7 +34,10 @@ export default function HelpSupportScreen() {
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.header}>
-                    <Pressable onPress={() => router.back()} style={styles.backBtn}>
+                    <Pressable 
+                        onPress={() => router.back()} 
+                        style={[styles.backBtn, { transform: [{ scaleX: isRtl ? -1 : 1 }] }]}
+                    >
                         <MaterialIcons name="arrow-back" size={24} color={AppColors.textPrimary} />
                     </Pressable>
                     <View style={{ alignItems: 'center' }}>
@@ -68,7 +71,7 @@ export default function HelpSupportScreen() {
                             onPress={() => setExpandedId(expandedId === item.id ? null : item.id)}
                         >
                             <View style={[styles.faqQuestion, rowStyle]}>
-                                <Text style={[styles.faqQuestionText, alignStyle, isRtl ? { marginLeft: 8 } : { marginRight: 8 }]}>{item.question}</Text>
+                                <Text style={[styles.faqQuestionText, alignStyle, { [isRtl ? 'marginLeft' : 'marginRight']: 8 }]}>{item.question}</Text>
                                 <MaterialIcons
                                     name={expandedId === item.id ? 'expand-less' : 'expand-more'}
                                     size={24}

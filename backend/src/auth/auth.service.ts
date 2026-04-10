@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { OtpService } from '../otp/otp.service.js';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -12,7 +13,9 @@ export class AuthService {
         private otpService: OtpService,
     ) {}
 
-    async register(name: string, email: string, password: string, phone?: string) {
+    async register(data: any) {
+        const { name, email, password, phone, ...supplierData } = data;
+
         const existingUser = await this.prisma.user.findUnique({
             where: { email },
         });
@@ -30,12 +33,14 @@ export class AuthService {
                 name,
                 phone: phone || null,
                 password: hashedPassword,
+                ...supplierData,
             },
             create: {
                 name,
                 email,
                 phone: phone || null,
                 password: hashedPassword,
+                ...supplierData,
             },
         });
  
@@ -113,6 +118,7 @@ export class AuthService {
                 email: true,
                 phone: true,
                 role: true,
+                supplierProfile: true, // Business details
                 createdAt: true,
             },
         });
@@ -124,30 +130,45 @@ export class AuthService {
         return user;
     }
 
-    async updateProfile(userId: string, data: { name?: string; email?: string }) {
-        if (data.email) {
+    async updateProfile(userId: string, data: any) {
+        const { name, email, ...supplierData } = data;
+
+        if (email) {
             const existing = await this.prisma.user.findFirst({
-                where: { email: data.email, NOT: { id: userId } },
+                where: { email, NOT: { id: userId } },
             });
             if (existing) {
                 throw new ConflictException('This email is already in use');
             }
         }
 
-        const user = await this.prisma.user.update({
+        // Update User basic info
+        await this.prisma.user.update({
             where: { id: userId },
-            data,
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                phone: true,
-                role: true,
-                createdAt: true,
-            },
+            data: { name, email },
         });
 
-        return user;
+        // Get user role to see if we need to update Supplier profile
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+
+        if (user && user.role === Role.SUPPLIER) {
+            await (this.prisma as any).supplier.upsert({
+                where: { userId },
+                update: {
+                    ...supplierData,
+                    name: name || user.name,
+                    email: email || user.email,
+                },
+                create: {
+                    ...supplierData,
+                    userId,
+                    name: name || user.name,
+                    email: email || user.email,
+                },
+            });
+        }
+
+        return this.getProfile(userId);
     }
 
     async changePassword(userId: string, currentPassword: string, newPassword: string) {

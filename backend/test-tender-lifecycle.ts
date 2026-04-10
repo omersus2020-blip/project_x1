@@ -11,9 +11,21 @@ async function main() {
 
     // 1. Preparation: Find our supplier and users
     console.log('📦 1. PREPARATION');
-    const supplier = await prisma.user.findUnique({ where: { email: 'supplier@blip.com' } });
-    if (!supplier) throw new Error('Supplier not found. Did you run the seed?');
+    const supplierUser = await prisma.user.findUnique({ where: { email: 'supplier@blip.com' } });
+    if (!supplierUser) throw new Error('Supplier user not found. Did you run the seed?');
     
+    const supplier = await (prisma as any).supplier.upsert({
+        where: { userId: supplierUser.id },
+        update: {},
+        create: {
+            userId: supplierUser.id,
+            name: supplierUser.name,
+            email: supplierUser.email,
+            companyNumber: '12345',
+            businessSector: 'Electronics'
+        }
+    });
+
     const liveUser = await prisma.user.findUnique({
         where: { email: 'omersus2020@gmail.com' }
     });
@@ -68,16 +80,28 @@ async function main() {
 
     // 4. Another Supplier Places a Bid
     console.log('💰 4. COMPETITOR SUPPLIER PLACES A BID');
-    const competitor = await prisma.user.upsert({
+    const competitorUser = await prisma.user.upsert({
         where: { email: 'competitor@blip.com' },
         update: {},
         create: { name: 'Competitor Supplier', email: 'competitor@blip.com', password: 'pwd', role: 'SUPPLIER' }
+    });
+
+    const competitor = await (prisma as any).supplier.upsert({
+        where: { userId: competitorUser.id },
+        update: {},
+        create: {
+            userId: competitorUser.id,
+            name: competitorUser.name,
+            email: competitorUser.email,
+            companyNumber: 'COMP-678',
+            businessSector: 'Electronics'
+        }
     });
     
     await (prisma.supplierBid.create as any)({
         data: { 
             tenderId: newTender.id, 
-            userId: competitor.id, 
+            supplierId: competitor.id, 
             bidPrice: 1750,
             supplierName: competitor.name,
             supplierEmail: competitor.email,
@@ -93,11 +117,6 @@ async function main() {
 
     // 6. Running the Cron Job Logic Manually (simulating the scheduler)
     console.log('⚙️ 6. SIMULATING CRON JOB EXECUTION');
-    // We simulate the logic directly below:
-    
-    // We need to bypass NestJS dependency injection for the test script
-    // We'll just run the logic directly since we're in a standalone script
-    // (In your app, the cron runs automatically `handleExpiredTenders()`)
     
     const expiredTenders = await prisma.tender.findMany({
         where: {
@@ -119,8 +138,8 @@ async function main() {
         
         // Mark Bids
         if (winningBid) {
-            await prisma.supplierBid.update({ where: { id: winningBid.id }, data: { status: 'WON' } });
-            console.log(`✅ Marked bid by ${winningBid.userId} as WON`);
+            await (prisma.supplierBid.update as any)({ where: { id: winningBid.id }, data: { status: 'WON' } });
+            console.log(`✅ Marked bid by Supplier ${(winningBid as any).supplierId} as WON`);
         }
 
         // Create Orders
@@ -158,9 +177,10 @@ async function main() {
 
         // Notify Winning Supplier
         if (winningBid) {
+            const supplierProfile = await (prisma as any).supplier.findUnique({ where: { id: (winningBid as any).supplierId } });
             await (prisma.notification.create as any)({
                 data: {
-                    userId: winningBid.userId,
+                    userId: supplierProfile?.userId,
                     title: `You won the tender: "${tender.title}"!`,
                     body: `Congratulations!`,
                     type: 'TENDER_WON',
@@ -168,7 +188,7 @@ async function main() {
                     tenderTitle: tender.title
                 }
             });
-            console.log(`✅ Generated Notification for WINNING SUPPLIER (${winningBid.userId})`);
+            console.log(`✅ Generated Notification for WINNING SUPPLIER (Supplier: ${(winningBid as any).supplierId})`);
         }
     }
     console.log('\n');

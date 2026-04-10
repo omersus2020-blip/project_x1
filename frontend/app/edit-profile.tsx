@@ -74,7 +74,10 @@ export default function EditProfileScreen() {
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
                 <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
                     <View style={styles.header}>
-                        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+                        <Pressable 
+                            onPress={() => router.back()} 
+                            style={[styles.backBtn, { transform: [{ scaleX: isRtl ? -1 : 1 }] }]}
+                        >
                             <MaterialIcons name="arrow-back" size={24} color={AppColors.textPrimary} />
                         </Pressable>
                         <View style={{ alignItems: 'center' }}>

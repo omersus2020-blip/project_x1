@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { TenderStatus } from '@prisma/client';
+import { Role, TenderStatus } from '@prisma/client';
 
 @Injectable()
 export class TendersService {
@@ -8,14 +8,14 @@ export class TendersService {
 
     async findAll() {
         return this.prisma.tender.findMany({
-            where: { status: TenderStatus.ACTIVE },
+            where: { status: 'ACTIVE' },
             orderBy: { createdAt: 'desc' },
         });
     }
 
     async findActive() {
         return this.prisma.tender.findMany({
-            where: { status: TenderStatus.ACTIVE },
+            where: { status: 'ACTIVE' },
             orderBy: { endDate: 'asc' },
         });
     }
@@ -69,8 +69,8 @@ export class TendersService {
         }
 
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
-        if (!user || user.role !== 'CUSTOMER') {
-            throw new NotFoundException(`User "${userId}" not found or not a CUSTOMER`);
+        if (!user || user.role !== Role.CUSTOMER) {
+            throw new BadRequestException('Suppliers and Admins cannot participate in tenders as customers.');
         }
 
         // Validate address if provided
@@ -278,24 +278,24 @@ export class TendersService {
             throw new NotFoundException(`Tender "${id}" is no longer active`);
         }
 
-        const user = await this.prisma.user.findUnique({ where: { id: userId } });
-        if (!user || user.role !== 'SUPPLIER') {
-            throw new NotFoundException(`User "${userId}" not found or not a SUPPLIER`);
+        const supplier = await (this.prisma as any).supplier.findUnique({ where: { userId } });
+        if (!supplier) {
+            throw new NotFoundException(`Supplier profile for user "${userId}" not found`);
         }
 
-        const bid = await this.prisma.supplierBid.create({
+        const bid = await (this.prisma as any).supplierBid.create({
             data: {
                 tenderId: id,
-                userId: userId,
+                supplierId: (supplier as any).id,
                 bidPrice: Number(bidPrice),
-                supplierName: user.name,
-                supplierEmail: user.email,
+                supplierName: (supplier as any).name,
+                supplierEmail: (supplier as any).email,
                 tenderTitle: tender.title
             }
         });
 
         return {
-            message: `Supplier ${user.name} bid ${bidPrice} on tender "${tender.title}"`,
+            message: `Supplier ${supplier.name} bid ${bidPrice} on tender "${tender.title}"`,
             bidId: bid.id,
             bidPrice: bid.bidPrice
         };
@@ -308,5 +308,41 @@ export class TendersService {
                 views: { increment: 1 }
             }
         })
+    }
+    
+    async create(data: any, userId: string) {
+        const supplier = await (this.prisma as any).supplier.findUnique({ where: { userId } });
+        if (!supplier) {
+            throw new BadRequestException('Only registered suppliers with a completed profile can create tenders');
+        }
+
+        return this.prisma.tender.create({
+            data: {
+                ...data,
+                supplierId: (supplier as any).id,
+                status: 'PENDING_APPROVAL' as any,
+                currentParticipants: 0,
+                currentPrice: data.originalPrice
+            }
+        });
+    }
+
+    async approve(id: string, adminId: string) {
+        const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
+        if (!admin || admin.role !== (Role as any).ADMIN) {
+            throw new BadRequestException('Only admins can approve tenders');
+        }
+
+        return this.prisma.tender.update({
+            where: { id },
+            data: { status: (TenderStatus as any).ACTIVE }
+        });
+    }
+
+    async findPending() {
+        return this.prisma.tender.findMany({
+            where: { status: (TenderStatus as any).PENDING_APPROVAL },
+            orderBy: { createdAt: 'desc' }
+        });
     }
 }

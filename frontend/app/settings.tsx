@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     View, Text, TextInput, StyleSheet,
-    Pressable, Alert, ScrollView, ActivityIndicator,
+    Pressable, Alert, ScrollView, ActivityIndicator, Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -82,7 +82,10 @@ export default function SettingsScreen() {
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.header}>
-                    <Pressable onPress={() => router.back()} style={styles.backBtn}>
+                    <Pressable 
+                        onPress={() => router.back()} 
+                        style={[styles.backBtn, { transform: [{ scaleX: isRtl ? -1 : 1 }] }]}
+                    >
                         <MaterialIcons name="arrow-back" size={24} color={AppColors.textPrimary} />
                     </Pressable>
                     <View style={{ alignItems: 'center' }}>
@@ -96,15 +99,15 @@ export default function SettingsScreen() {
                     <Text style={[styles.sectionTitle, alignStyle]}>{t('settings.change_pw', 'Change Password')}</Text>
                     <View style={[styles.inputContainer, rowStyle]}>
                         <MaterialIcons name="lock-outline" size={18} color={AppColors.textMuted} />
-                        <TextInput style={[styles.input, alignStyle]} placeholder={t('settings.current_pw', 'Current password')} placeholderTextColor={AppColors.textMuted} secureTextEntry value={currentPw} onChangeText={setCurrentPw} />
+                        <TextInput style={[styles.input, alignStyle, Platform.OS === 'web' && { outlineStyle: 'none' } as any]} placeholder={t('settings.current_pw', 'Current password')} placeholderTextColor={AppColors.textMuted} secureTextEntry value={currentPw} onChangeText={setCurrentPw} />
                     </View>
                     <View style={[styles.inputContainer, rowStyle]}>
                         <MaterialIcons name="lock" size={18} color={AppColors.textMuted} />
-                        <TextInput style={[styles.input, alignStyle]} placeholder={t('settings.new_pw', 'New password')} placeholderTextColor={AppColors.textMuted} secureTextEntry value={newPw} onChangeText={setNewPw} />
+                        <TextInput style={[styles.input, alignStyle, Platform.OS === 'web' && { outlineStyle: 'none' } as any]} placeholder={t('settings.new_pw', 'New password')} placeholderTextColor={AppColors.textMuted} secureTextEntry value={newPw} onChangeText={setNewPw} />
                     </View>
                     <View style={[styles.inputContainer, rowStyle]}>
                         <MaterialIcons name="lock" size={18} color={AppColors.textMuted} />
-                        <TextInput style={[styles.input, alignStyle]} placeholder={t('settings.confirm_pw', 'Confirm new password')} placeholderTextColor={AppColors.textMuted} secureTextEntry value={confirmPw} onChangeText={setConfirmPw} />
+                        <TextInput style={[styles.input, alignStyle, Platform.OS === 'web' && { outlineStyle: 'none' } as any]} placeholder={t('settings.confirm_pw', 'Confirm new password')} placeholderTextColor={AppColors.textMuted} secureTextEntry value={confirmPw} onChangeText={setConfirmPw} />
                     </View>
                     <Pressable style={[styles.changeButton, changingPw && { opacity: 0.7 }]} onPress={handleChangePassword} disabled={changingPw}>
                         {changingPw ? <ActivityIndicator color="#FFF" /> : <Text style={styles.changeButtonText}>{t('settings.update_pw', 'Update Password')}</Text>}
@@ -116,7 +119,7 @@ export default function SettingsScreen() {
                     <Text style={[styles.sectionTitle, alignStyle]}>{t('settings.account', 'Account')}</Text>
                     <Pressable style={[styles.actionRow, rowStyle]} onPress={handleSignOut}>
                         <View style={styles.actionIcon}>
-                            <MaterialIcons name="logout" size={22} color={AppColors.textPrimary} />
+                            <MaterialIcons name="logout" size={22} color={AppColors.textPrimary} style={isRtl ? { transform: [{ scaleX: -1 }] } : {}} />
                         </View>
                         <View style={[{ flex: 1 }, alignEndStyle]}>
                             <Text style={[styles.actionTitle, alignStyle]}>{t('settings.sign_out', 'Sign Out')}</Text>

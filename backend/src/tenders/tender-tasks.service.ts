@@ -67,7 +67,8 @@ export class TenderTasksService {
                     });
                 }
 
-                this.logger.log(`Winning supplier bid: ${winningBid!.userId} with price $${winningBid!.bidPrice}`);
+                const winId = (winningBid as any).supplierId;
+                this.logger.log(`Winning supplier bid: ${winId} with price $${winningBid!.bidPrice}`);
             } else {
                 this.logger.warn(`No supplier bids for tender ${tender.id}`);
             }
@@ -144,9 +145,11 @@ export class TenderTasksService {
                 const totalRevenue = tender.enrollments.reduce((sum, e) => sum + (tender.currentPrice * e.quantity), 0);
                 const totalQuantity = tender.enrollments.reduce((sum, e) => sum + e.quantity, 0);
 
+                const supplier = await (this.prisma as any).supplier.findUnique({ where: { id: (winningBid as any).supplierId } });
+
                 await this.prisma.notification.create({
                     data: {
-                        userId: winningBid.userId,
+                        userId: supplier.userId,
                         title: `You won the tender: "${tender.title}"!`,
                         body: `Your bid of $${winningBid.bidPrice.toFixed(2)} won! `
                             + `${tender.enrollments.length} customer(s) ordered ${totalQuantity} items total. `
@@ -158,14 +161,15 @@ export class TenderTasksService {
                     },
                 });
 
-                this.logger.log(`Notified winning supplier ${winningBid.userId} for tender ${tender.id}`);
+                this.logger.log(`Notified winning supplier ${supplier.userId} for tender ${tender.id}`);
             }
 
             // 6. Notify the tender creator (supplier who uploaded it)
-            if (tender.supplierId !== winningBid?.userId) {
+            const tenderCreator = await (this.prisma as any).supplier.findUnique({ where: { id: tender.supplierId } });
+            if (tenderCreator && tender.supplierId !== (winningBid as any)?.supplierId) {
                 await this.prisma.notification.create({
                     data: {
-                        userId: tender.supplierId,
+                        userId: tenderCreator.userId,
                         title: `Your tender "${tender.title}" has completed`,
                         body: `${tender.enrollments.length} customer(s) ordered ${tender.enrollments.reduce((sum, e) => sum + e.quantity, 0)} items at final price $${tender.currentPrice.toFixed(2)}. `
                             + (winningBid

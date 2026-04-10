@@ -58,4 +58,19 @@ export class TendersController {
     async incrementaView(@Param('id') id: string) {
         return this.tendersService.incrementviews(id);
     }
+
+    @Get('admin/pending')
+    findPending() {
+        return this.tendersService.findPending();
+    }
+
+    @Post()
+    create(@Body() data: any, @Body('supplierId') supplierId: string) {
+        return this.tendersService.create(data, supplierId);
+    }
+
+    @Post(':id/approve')
+    approve(@Param('id') id: string, @Body('adminId') adminId: string) {
+        return this.tendersService.approve(id, adminId);
+    }
 }

@@ -154,6 +154,14 @@ export class OtpService {
                 throw new BadRequestException('Pending registration not found.');
             }
 
+            // Detect if this is a supplier registration
+            const {
+                companyNumber, bankAccount, businessAddress, businessSector, contactName, contactPhone,
+                ...basicData
+            } = pendingUser as any;
+
+            const isSupplier = !!companyNumber;
+
             // Create actual user
             user = await this.prisma.user.create({
                 data: {
@@ -162,7 +170,7 @@ export class OtpService {
                     phone: pendingUser.phone,
                     password: pendingUser.password,
                     isVerified: true,
-                    role: 'CUSTOMER',
+                    role: isSupplier ? 'SUPPLIER' : 'CUSTOMER',
                 },
                 select: {
                     id: true,
@@ -173,6 +181,23 @@ export class OtpService {
                     createdAt: true,
                 },
             });
+
+            // If supplier, create the supplier profile
+            if (isSupplier) {
+                await (this.prisma as any).supplier.create({
+                    data: {
+                        userId: user.id,
+                        name: pendingUser.name,
+                        email: pendingUser.email,
+                        companyNumber,
+                        bankAccount,
+                        businessAddress,
+                        businessSector,
+                        contactName,
+                        contactPhone
+                    }
+                });
+            }
 
             // Cleanup
             await this.prisma.pendingUser.delete({ where: { id: pendingUser.id } });
