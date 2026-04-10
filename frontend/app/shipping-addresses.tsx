@@ -122,6 +122,7 @@ export default function ShippingAddressesScreen() {
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
                     style={styles.modalOverlay}
                 >
+                    {/* @ts-ignore - This is a valid Android-only prop to stop autofill overlays */}
                     <View style={styles.modal} importantForAutofill="noExcludeDescendants">
                         <View style={[styles.modalHeader, rowStyle]}>
                             <Text style={[styles.modalTitle, alignStyle]}>{t('shipping.new_address', 'New Address')}</Text>
