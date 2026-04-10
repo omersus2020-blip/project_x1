@@ -4,7 +4,6 @@ import {
     Text,
     TextInput,
     StyleSheet,
-    SafeAreaView,
     Pressable,
     ActivityIndicator,
     Alert,
@@ -12,6 +11,7 @@ import {
     Platform,
     ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AppColors } from '@/constants/theme';
@@ -92,6 +92,7 @@ export default function SignUpScreen() {
 
                     {/* Form */}
                     <View style={styles.form}>
+                        {/* Name Field */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>{t('auth.name_label', 'Full Name')}</Text>
                             <View style={styles.inputContainer}>
@@ -102,11 +103,15 @@ export default function SignUpScreen() {
                                     placeholderTextColor={AppColors.textMuted}
                                     value={name}
                                     onChangeText={setName}
-                                    id="signup-name"
+                                    importantForAutofill="noExcludeDescendants"
+                                    textContentType="none"
+                                    autoComplete="off"
+                                    id="f_su_n"
                                 />
                             </View>
                         </View>
 
+                        {/* Email Field */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>{t('auth.email_label', 'Email')}</Text>
                             <View style={styles.inputContainer}>
@@ -120,23 +125,30 @@ export default function SignUpScreen() {
                                     autoCorrect={false}
                                     value={email}
                                     onChangeText={setEmail}
-                                    id="signup-email"
+                                    importantForAutofill="noExcludeDescendants"
+                                    textContentType="none"
+                                    autoComplete="off"
+                                    id="f_su_e"
                                 />
                             </View>
                         </View>
 
+                        {/* Password Field */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>{t('auth.password_label', 'Password')}</Text>
                             <View style={styles.inputContainer}>
                                 <MaterialIcons name="lock-outline" size={20} color={AppColors.textMuted} />
                                 <TextInput
                                     style={styles.input}
-                                    placeholder={t('auth.create_password_placeholder', 'Create a password (min 6 chars)')}
+                                    placeholder={t('auth.password_placeholder', 'Create a password')}
                                     placeholderTextColor={AppColors.textMuted}
                                     secureTextEntry={!showPassword}
                                     value={password}
                                     onChangeText={setPassword}
-                                    id="signup-password"
+                                    importantForAutofill="noExcludeDescendants"
+                                    textContentType="none"
+                                    autoComplete="off"
+                                    id="f_su_p"
                                 />
                                 <Pressable onPress={() => setShowPassword(!showPassword)}>
                                     <MaterialIcons
@@ -148,6 +160,7 @@ export default function SignUpScreen() {
                             </View>
                         </View>
 
+                        {/* Confirm Password Field */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>{t('auth.confirm_password_label', 'Confirm Password')}</Text>
                             <View style={styles.inputContainer}>
@@ -159,7 +172,10 @@ export default function SignUpScreen() {
                                     secureTextEntry={!showPassword}
                                     value={confirmPassword}
                                     onChangeText={setConfirmPassword}
-                                    id="signup-confirm-password"
+                                    importantForAutofill="noExcludeDescendants"
+                                    textContentType="none"
+                                    autoComplete="off"
+                                    id="f_su_cp"
                                 />
                             </View>
                         </View>
@@ -168,7 +184,6 @@ export default function SignUpScreen() {
                             style={({ pressed }) => [styles.submitButton, pressed && { opacity: 0.9 }, loading && { opacity: 0.7 }]}
                             onPress={handleSignUp}
                             disabled={loading}
-                            id="signup-submit"
                         >
                             {loading ? (
                                 <ActivityIndicator color="#FFFFFF" />
@@ -272,7 +287,7 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F9FAFB',
+        backgroundColor: '#FFFFFF',
         borderRadius: 14,
         borderWidth: 1,
         borderColor: AppColors.cardBorder,

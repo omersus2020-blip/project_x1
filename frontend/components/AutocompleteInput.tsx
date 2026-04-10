@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, TextInput, Text, StyleSheet, Platform, Pressable, ScrollView } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AppColors } from '@/constants/theme';
@@ -12,6 +12,7 @@ interface Props {
     rowStyle: any;
     type: 'country' | 'city' | 'street' | 'label';
     zIndex: number;
+    importantForAutofill?: "auto" | "no" | "noExcludeDescendants" | "yes" | "yesExcludeDescendants";
 }
 
 const CITIES_ISRAEL = [
@@ -31,8 +32,9 @@ const STREETS_MOCK = [
     "Jabotinsky", "Sokolov"
 ];
 
-export default function AutocompleteInput({ value, onChangeText, placeholder, icon, alignStyle, rowStyle, type, zIndex }: Props) {
+export default function AutocompleteInput({ value, onChangeText, placeholder, icon, alignStyle, rowStyle, type, zIndex, importantForAutofill }: Props) {
     const [focused, setFocused] = useState(false);
+    const inputRef = useRef<TextInput>(null);
 
     // Filter suggestions based on type
     let suggestions: string[] = [];
@@ -50,10 +52,14 @@ export default function AutocompleteInput({ value, onChangeText, placeholder, ic
     }
 
     return (
-        <View style={{ zIndex: focused ? 1000 : zIndex, width: '100%' }}>
-            <View style={[styles.modalInput, rowStyle]}>
-                <MaterialIcons name={icon} size={18} color={AppColors.textMuted} />
+        <View style={{ zIndex: focused ? 1000 : zIndex, elevation: focused ? 10 : 0, width: '100%' }}>
+            <Pressable 
+                style={[styles.modalInput, rowStyle, focused && styles.modalInputFocused]}
+                onPress={() => inputRef.current?.focus()}
+            >
+                <MaterialIcons name={icon} size={18} color={focused ? AppColors.ctaButton : AppColors.textMuted} />
                 <TextInput
+                    ref={inputRef}
                     style={[styles.modalInputText, alignStyle, Platform.OS === 'web' && { outlineStyle: 'none' } as any]}
                     placeholder={placeholder}
                     placeholderTextColor={AppColors.textMuted}
@@ -61,13 +67,14 @@ export default function AutocompleteInput({ value, onChangeText, placeholder, ic
                     onChangeText={onChangeText}
                     onFocus={() => setFocused(true)}
                     onBlur={() => {
-                        // Small delay to allow press event on suggestion to register before blurring
                         setTimeout(() => setFocused(false), 200);
                     }}
-                    autoComplete="off"
+                    autoComplete={Platform.OS === 'android' ? 'off' : 'name'}
+                    importantForAutofill="noExcludeDescendants"
+                    textContentType="none"
                     autoCorrect={false}
                 />
-            </View>
+            </Pressable>
             
             {suggestions.length > 0 && (
                 <View style={styles.dropdown}>
@@ -98,19 +105,25 @@ export default function AutocompleteInput({ value, onChangeText, placeholder, ic
 const styles = StyleSheet.create({
     modalInput: { 
         alignItems: 'center', 
-        backgroundColor: '#F9FAFB', 
+        backgroundColor: '#FFFFFF', 
         borderRadius: 12, 
         borderWidth: 1, 
         borderColor: AppColors.cardBorder, 
         paddingHorizontal: 12, 
-        paddingVertical: 12, 
-        gap: 8 
+        paddingVertical: Platform.OS === 'ios' ? 12 : 4,
+        gap: 8,
+        minHeight: 52,
+    },
+    modalInputFocused: {
+        borderColor: AppColors.ctaButton,
+        backgroundColor: '#FFFFFF',
     },
     modalInputText: { 
         flex: 1, 
         fontSize: 15, 
         color: AppColors.textPrimary,
-        paddingVertical: 0, // Ensure height is consistent
+        height: '100%',
+        minHeight: 40,
     },
     dropdown: {
         position: 'absolute',

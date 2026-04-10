@@ -127,9 +127,18 @@ export default function PaymentMethodsScreen() {
             </Pressable>
 
             <Modal visible={showModal} animationType="slide" transparent>
-                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+                    style={styles.modalOverlay}
+                    importantForAutofill="noExcludeDescendants"
+                >
                     <View style={styles.modal}>
-                        <Text style={[styles.modalTitle, alignStyle]}>{t('payment.add_card', 'Add Card')}</Text>
+                        <View style={[styles.modalHeader, rowStyle]}>
+                            <Text style={[styles.modalTitle, alignStyle]}>{t('payment.add_card', 'Add Card')}</Text>
+                            <Pressable onPress={() => setShowModal(false)} style={styles.closeBtn}>
+                                <MaterialIcons name="close" size={24} color={AppColors.textMuted} />
+                            </Pressable>
+                        </View>
 
                         <View style={[styles.modalInput, rowStyle]}>
                             <MaterialIcons name="credit-card" size={18} color={AppColors.textMuted} />
@@ -141,6 +150,9 @@ export default function PaymentMethodsScreen() {
                                 maxLength={4}
                                 value={form.last4}
                                 onChangeText={(v) => setForm({ ...form, last4: v.replace(/\D/g, '').slice(0, 4) })}
+                                importantForAutofill="noExcludeDescendants"
+                                textContentType="none"
+                                id="f_x_l4"
                             />
                         </View>
 
@@ -154,6 +166,9 @@ export default function PaymentMethodsScreen() {
                                     maxLength={2}
                                     value={form.expMonth}
                                     onChangeText={(v) => setForm({ ...form, expMonth: v.replace(/\D/g, '').slice(0, 2) })}
+                                    importantForAutofill="noExcludeDescendants"
+                                    textContentType="none"
+                                    id="f_x_em"
                                 />
                             </View>
                             <Text style={styles.expirySeparator}>/</Text>
@@ -166,6 +181,9 @@ export default function PaymentMethodsScreen() {
                                     maxLength={4}
                                     value={form.expYear}
                                     onChangeText={(v) => setForm({ ...form, expYear: v.replace(/\D/g, '').slice(0, 4) })}
+                                    importantForAutofill="noExcludeDescendants"
+                                    textContentType="none"
+                                    id="f_x_ey"
                                 />
                             </View>
                         </View>
@@ -214,9 +232,21 @@ const styles = StyleSheet.create({
     addButton: { position: 'absolute', bottom: 30, left: 24, right: 24, backgroundColor: AppColors.ctaButton, paddingVertical: 16, borderRadius: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
     addButtonText: { color: AppColors.ctaButtonText, fontSize: 16, fontWeight: '700' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-    modal: { backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 12 },
-    modalTitle: { fontSize: 20, fontWeight: '800', color: AppColors.textPrimary, marginBottom: 4 },
-    modalInput: { alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 12, borderWidth: 1, borderColor: AppColors.cardBorder, paddingHorizontal: 12, paddingVertical: 12, gap: 8 },
+    modal: { backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 12, paddingBottom: 40 },
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    modalTitle: { fontSize: 20, fontWeight: '800', color: AppColors.textPrimary },
+    closeBtn: { padding: 4 },
+    modalInput: { 
+        alignItems: 'center', 
+        backgroundColor: '#FFFFFF', 
+        borderRadius: 12, 
+        borderWidth: 1, 
+        borderColor: AppColors.cardBorder, 
+        paddingHorizontal: 12, 
+        paddingVertical: Platform.OS === 'ios' ? 12 : 4,
+        gap: 8,
+        minHeight: 52,
+    },
     modalInputText: { flex: 1, fontSize: 15, color: AppColors.textPrimary },
     expiryRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     expirySeparator: { fontSize: 20, color: AppColors.textMuted },

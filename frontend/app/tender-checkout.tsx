@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -8,7 +8,7 @@ import {
     ActivityIndicator,
     Alert,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AppColors } from '@/constants/theme';
@@ -47,7 +47,7 @@ export default function TenderCheckoutScreen() {
         }
     }, [id]);
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             setLoading(true);
             const user = await getStoredUser();
@@ -66,11 +66,11 @@ export default function TenderCheckoutScreen() {
             setAddresses(addressesData);
             setPaymentMethods(paymentsData);
 
-            if (addressesData.length > 0) {
+            if (addressesData.length > 0 && !selectedAddressId) {
                 const defAuth = addressesData.find((a: any) => a.isDefault);
                 setSelectedAddressId(defAuth ? defAuth.id : addressesData[0].id);
             }
-            if (paymentsData.length > 0) {
+            if (paymentsData.length > 0 && !selectedPaymentId) {
                 const defPay = paymentsData.find((p: any) => p.isDefault);
                 setSelectedPaymentId(defPay ? defPay.id : paymentsData[0].id);
             }
@@ -81,7 +81,13 @@ export default function TenderCheckoutScreen() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, t, router, selectedAddressId, selectedPaymentId]);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadData();
+        }, [loadData])
+    );
 
     const handleQuantityChange = (delta: number) => {
         const newQty = quantity + delta;
@@ -414,7 +420,7 @@ const styles = StyleSheet.create({
     quantityControl: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F9FAFB',
+        backgroundColor: '#FFFFFF',
         borderWidth: 1,
         borderColor: AppColors.cardBorder,
         borderRadius: 8,
@@ -464,7 +470,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: AppColors.cardBorder,
         borderRadius: 12,
-        backgroundColor: '#F9FAFB',
+        backgroundColor: '#FFFFFF',
     },
     optionRowActive: {
         borderColor: AppColors.ctaButton,

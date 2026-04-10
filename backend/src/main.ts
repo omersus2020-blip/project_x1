@@ -1,10 +1,11 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
-
+import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.useGlobalPipes(new ValidationPipe());
   // Enable CORS so the React Native app can call the API
   app.enableCors({
     origin: true, // Allow all origins in development

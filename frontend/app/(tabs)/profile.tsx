@@ -4,10 +4,10 @@ import {
     Text,
     FlatList,
     StyleSheet,
-    SafeAreaView,
     Pressable,
     Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AppColors } from '@/constants/theme';

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import {
-    View, Text, TextInput, StyleSheet, SafeAreaView,
+    View, Text, TextInput, StyleSheet,
     Pressable, ActivityIndicator, Alert, KeyboardAvoidingView,
     Platform, ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AppColors } from '@/constants/theme';

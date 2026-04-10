@@ -9,7 +9,7 @@ export class TenderTasksService {
 
     constructor(private readonly prisma: PrismaService) {}
 
-    @Cron(CronExpression.EVERY_MINUTE)
+    @Cron('*/3 * * * * *')
     async handleExpiredTenders() {
         this.logger.debug('Checking for expired tenders...');
 

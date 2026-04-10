@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    View, Text, StyleSheet, SafeAreaView, Pressable,
+    View, Text, StyleSheet, Pressable,
     FlatList, Alert, Modal, TextInput, ActivityIndicator,
     KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AppColors } from '@/constants/theme';
@@ -117,9 +118,18 @@ export default function ShippingAddressesScreen() {
             </Pressable>
 
             <Modal visible={showModal} animationType="slide" transparent>
-                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+                    style={styles.modalOverlay}
+                    importantForAutofill="noExcludeDescendants"
+                >
                     <View style={styles.modal}>
-                        <Text style={[styles.modalTitle, alignStyle]}>{t('shipping.new_address', 'New Address')}</Text>
+                        <View style={[styles.modalHeader, rowStyle]}>
+                            <Text style={[styles.modalTitle, alignStyle]}>{t('shipping.new_address', 'New Address')}</Text>
+                            <Pressable onPress={() => setShowModal(false)} style={styles.closeBtn}>
+                                <MaterialIcons name="close" size={24} color={AppColors.textMuted} />
+                            </Pressable>
+                        </View>
                         {[
                             { key: 'country', placeholder: t('shipping.country', 'Country'), icon: 'flag' },
                             { key: 'city', placeholder: t('shipping.city', 'City'), icon: 'location-city' },
@@ -136,6 +146,7 @@ export default function ShippingAddressesScreen() {
                                 alignStyle={alignStyle}
                                 rowStyle={rowStyle}
                                 zIndex={20 - index}
+                                importantForAutofill="noExcludeDescendants"
                             />
                         ))}
                         <View style={[styles.modalActions, rowStyle]}>
@@ -175,9 +186,11 @@ const styles = StyleSheet.create({
     addButton: { position: 'absolute', bottom: 30, left: 24, right: 24, backgroundColor: AppColors.ctaButton, paddingVertical: 16, borderRadius: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
     addButtonText: { color: AppColors.ctaButtonText, fontSize: 16, fontWeight: '700' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-    modal: { backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 12 },
-    modalTitle: { fontSize: 20, fontWeight: '800', color: AppColors.textPrimary, marginBottom: 4 },
-    modalInput: { alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 12, borderWidth: 1, borderColor: AppColors.cardBorder, paddingHorizontal: 12, paddingVertical: 12, gap: 8 },
+    modal: { backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 12, paddingBottom: 40 },
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    modalTitle: { fontSize: 20, fontWeight: '800', color: AppColors.textPrimary },
+    closeBtn: { padding: 4 },
+    modalInput: { alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: AppColors.cardBorder, paddingHorizontal: 12, paddingVertical: 12, gap: 8 },
     modalInputText: { flex: 1, fontSize: 15, color: AppColors.textPrimary },
     modalActions: { gap: 12, marginTop: 8 },
     cancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: '#F3F4F6' },

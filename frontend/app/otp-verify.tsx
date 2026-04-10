@@ -4,7 +4,6 @@ import {
     Text,
     TextInput,
     StyleSheet,
-    SafeAreaView,
     Pressable,
     ActivityIndicator,
     Alert,
@@ -13,6 +12,7 @@ import {
     ScrollView,
     Animated,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AppColors } from '@/constants/theme';

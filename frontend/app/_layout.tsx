@@ -3,6 +3,10 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import '../i18n';
+import { LogBox } from 'react-native';
+
+// Ignore log notification by message:
+LogBox.ignoreAllLogs(); // Hide all warnings during the scale test to ensure no yellow blocks cover the screen
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useRouter } from 'expo-router';
@@ -15,14 +19,14 @@ export default function RootLayout() {
   const router = useRouter();
 
   const CustomHeaderBack = () => (
-    <View style={{ 
-      marginLeft: I18nManager.isRTL ? 0 : 4, 
-      marginRight: I18nManager.isRTL ? 4 : 0, 
-      justifyContent: 'center', 
-      alignItems: 'center' 
+    <View style={{
+      marginLeft: I18nManager.isRTL ? 0 : 4,
+      marginRight: I18nManager.isRTL ? 4 : 0,
+      justifyContent: 'center',
+      alignItems: 'center'
     }}>
-      <Pressable 
-        onPress={() => router.back()} 
+      <Pressable
+        onPress={() => router.back()}
         style={({ pressed }) => ({
           width: 44,
           height: 44,
@@ -32,10 +36,10 @@ export default function RootLayout() {
           alignItems: 'center',
         })}
       >
-        <MaterialIcons 
-          name={I18nManager.isRTL ? "chevron-right" : "chevron-left"} 
-          size={32} 
-          color={AppColors.textPrimary} 
+        <MaterialIcons
+          name={I18nManager.isRTL ? "chevron-right" : "chevron-left"}
+          size={32}
+          color={AppColors.textPrimary}
         />
       </Pressable>
     </View>
@@ -56,13 +60,13 @@ export default function RootLayout() {
         <Stack.Screen name="notifications-settings" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="help-support" options={{ headerShown: false }} />
-        <Stack.Screen 
-          name="notifications" 
-          options={{ 
-            title: 'Inbox', 
+        <Stack.Screen
+          name="notifications"
+          options={{
+            title: 'Inbox',
             headerTitleStyle: { fontWeight: '700' },
             headerLeft: () => <CustomHeaderBack />,
-          }} 
+          }}
         />
         <Stack.Screen
           name="tender-details"

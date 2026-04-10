@@ -4,7 +4,6 @@ import {
     Text,
     TextInput,
     StyleSheet,
-    SafeAreaView,
     Pressable,
     ActivityIndicator,
     Alert,
@@ -12,6 +11,7 @@ import {
     Platform,
     ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AppColors } from '@/constants/theme';
@@ -83,6 +83,7 @@ export default function SignInScreen() {
                                     value={email}
                                     onChangeText={setEmail}
                                     id="signin-email"
+                                    importantForAutofill="no"
                                 />
                             </View>
                         </View>
@@ -99,6 +100,7 @@ export default function SignInScreen() {
                                     value={password}
                                     onChangeText={setPassword}
                                     id="signin-password"
+                                    importantForAutofill="no"
                                 />
                                 <Pressable onPress={() => setShowPassword(!showPassword)}>
                                     <MaterialIcons
@@ -108,8 +110,8 @@ export default function SignInScreen() {
                                     />
                                 </Pressable>
                             </View>
-                            <Pressable 
-                                onPress={() => router.push('/forgot-password')} 
+                            <Pressable
+                                onPress={() => router.push('/forgot-password')}
                                 style={{ alignSelf: 'flex-end', marginTop: 4 }}
                             >
                                 <Text style={{ color: '#667eea', fontSize: 13, fontWeight: '600' }}>
@@ -226,7 +228,7 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F9FAFB',
+        backgroundColor: '#FFFFFF',
         borderRadius: 14,
         borderWidth: 1,
         borderColor: AppColors.cardBorder,
