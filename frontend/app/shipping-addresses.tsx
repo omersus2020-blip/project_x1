@@ -118,8 +118,8 @@ export default function ShippingAddressesScreen() {
             </Pressable>
 
             <Modal visible={showModal} animationType="slide" transparent>
-                <KeyboardAvoidingView 
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                     style={styles.modalOverlay}
                 >
                     {/* @ts-ignore - This is a valid Android-only prop to stop autofill overlays */}
