@@ -121,9 +121,8 @@ export default function ShippingAddressesScreen() {
                 <KeyboardAvoidingView 
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
                     style={styles.modalOverlay}
-                    importantForAutofill="noExcludeDescendants"
                 >
-                    <View style={styles.modal}>
+                    <View style={styles.modal} importantForAutofill="noExcludeDescendants">
                         <View style={[styles.modalHeader, rowStyle]}>
                             <Text style={[styles.modalTitle, alignStyle]}>{t('shipping.new_address', 'New Address')}</Text>
                             <Pressable onPress={() => setShowModal(false)} style={styles.closeBtn}>

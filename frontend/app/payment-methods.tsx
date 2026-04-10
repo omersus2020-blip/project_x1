@@ -130,9 +130,8 @@ export default function PaymentMethodsScreen() {
                 <KeyboardAvoidingView 
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
                     style={styles.modalOverlay}
-                    importantForAutofill="noExcludeDescendants"
                 >
-                    <View style={styles.modal}>
+                    <View style={styles.modal} importantForAutofill="noExcludeDescendants">
                         <View style={[styles.modalHeader, rowStyle]}>
                             <Text style={[styles.modalTitle, alignStyle]}>{t('payment.add_card', 'Add Card')}</Text>
                             <Pressable onPress={() => setShowModal(false)} style={styles.closeBtn}>
