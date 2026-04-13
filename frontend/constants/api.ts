@@ -169,13 +169,12 @@ export async function fetchAddresses() {
 
 export async function createAddress(data: {
     label?: string; street: string; city: string;
-    state?: string; country?: string; isDefault?: boolean;
+    state?: string; zipCode?: string; country?: string; isDefault?: boolean;
     lat?: number; lng?: number;
 }) {
-    const { lat, lng, ...payload } = data; // Omit lat/lng since they don't exist in backend schema yet
     return authFetch(`${API_URL}/addresses`, {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: JSON.stringify(data),
     });
 }
 

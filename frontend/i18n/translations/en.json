@@ -160,5 +160,30 @@
     "cancel": "Cancel",
     "save": "Save",
     "loading": "Loading..."
+  },
+  "header": {
+    "inbox": "Inbox",
+    "deal_details": "Deal Details",
+    "checkout": "Checkout"
+  },
+  "checkout": {
+    "load_failed": "Failed to load checkout data",
+    "missing_address": "Missing Address",
+    "please_add_address": "Please select or add a delivery address.",
+    "cancel_fee_notice": "Note: If you cancel your enrollment before the tender expires, a 5% fee will apply.",
+    "item_summary": "Item Summary",
+    "quantity": "Quantity:",
+    "delivery_address": "Delivery Address",
+    "add_address": "Add Delivery Address",
+    "payment_method": "Payment Method",
+    "coming_soon": "Coming Soon",
+    "payment_bypass_title": "Secure Checkout Integration",
+    "payment_bypass_desc": "We are currently integrating a secure third-party payment provider. You can securely confirm your enrollment now with zero upfront cost! Payment details will be collected at checkout fulfillment.",
+    "order_summary": "Order Summary",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "free": "Free",
+    "total": "Total",
+    "confirm": "Confirm & Join"
   }
 }

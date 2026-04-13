@@ -23,6 +23,7 @@ export default function SignUpScreen() {
     const { t } = useTranslation();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -53,7 +54,7 @@ export default function SignUpScreen() {
 
         try {
             setLoading(true);
-            const data = await registerUser(name.trim(), email.trim(), password);
+            const data = await registerUser(name.trim(), email.trim(), password, phone.trim());
             // Navigate to OTP verification screen
             router.replace({
                 pathname: '/otp-verify',
@@ -129,6 +130,25 @@ export default function SignUpScreen() {
                                     textContentType="none"
                                     autoComplete="off"
                                     id="f_su_e"
+                                />
+                            </View>
+                        </View>
+
+                        {/* Phone Field */}
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>{t('auth.phone_label', 'Phone Number (Optional)')}</Text>
+                            <View style={styles.inputContainer}>
+                                <MaterialIcons name="phone" size={20} color={AppColors.textMuted} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder={t('auth.phone_placeholder', 'Enter your phone number')}
+                                    placeholderTextColor={AppColors.textMuted}
+                                    keyboardType="phone-pad"
+                                    value={phone}
+                                    onChangeText={setPhone}
+                                    importantForAutofill="yes"
+                                    textContentType="telephoneNumber"
+                                    id="f_su_ph"
                                 />
                             </View>
                         </View>

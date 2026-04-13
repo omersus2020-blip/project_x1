@@ -233,6 +233,8 @@ model Address {
   state     String   @default("")
   zipCode   String?
   country   String   @default("Israel")
+  lat       Float?
+  lng       Float?
   isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

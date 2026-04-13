@@ -8,6 +8,8 @@ import { useTranslation } from 'react-i18next';
 interface AddressDetails {
     street: string;
     city: string;
+    state: string;
+    zipCode: string;
     country: string;
     lat: number;
     lng: number;
@@ -54,6 +56,8 @@ export default function GoogleAddressInput({ onSelect, placeholder, zIndex = 100
                             if (details) {
                                 let country = '';
                                 let city = '';
+                                let state = '';
+                                let zipCode = '';
                                 let street = data.structured_formatting?.main_text || '';
 
                                 // Extract components
@@ -66,11 +70,19 @@ export default function GoogleAddressInput({ onSelect, placeholder, zIndex = 100
                                     } else if (!city && component.types.includes('administrative_area_level_2')) {
                                         city = component.long_name; // fallback for some areas
                                     }
+                                    if (component.types.includes('administrative_area_level_1')) {
+                                        state = component.long_name;
+                                    }
+                                    if (component.types.includes('postal_code')) {
+                                        zipCode = component.long_name;
+                                    }
                                 });
 
                                 onSelect({
                                     street: street,
                                     city: city,
+                                    state: state,
+                                    zipCode: zipCode,
                                     country: country,
                                     lat: details.geometry?.location?.lat || 0,
                                     lng: details.geometry?.location?.lng || 0,

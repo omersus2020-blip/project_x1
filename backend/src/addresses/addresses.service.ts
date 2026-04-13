@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 @Injectable()
 export class AddressesService {
-    constructor(private prisma: PrismaService) {}
+    constructor(private prisma: PrismaService) { }
 
     async getAll(userId: string) {
         return this.prisma.address.findMany({
@@ -17,9 +17,17 @@ export class AddressesService {
         street: string;
         city: string;
         state?: string;
+        zipCode?: string;
         country?: string;
+        lat?: number;
+        lng?: number;
         isDefault?: boolean;
     }) {
+        const addressCount = await this.prisma.address.count({ where: { userId } });
+        if (addressCount >= 5) {
+            throw new BadRequestException('You cannot save more than 5 addresses. Please delete an existing address first.');
+        }
+
         // If setting as default, unset other defaults
         if (data.isDefault) {
             await this.prisma.address.updateMany({
@@ -38,7 +46,10 @@ export class AddressesService {
         street?: string;
         city?: string;
         state?: string;
+        zipCode?: string;
         country?: string;
+        lat?: number;
+        lng?: number;
         isDefault?: boolean;
     }) {
         if (data.isDefault) {

@@ -23,7 +23,9 @@ export default function ShippingAddressesScreen() {
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [form, setForm] = useState<{ label: string; street: string; city: string; country: string; lat?: number; lng?: number }>({ label: 'Home', street: '', city: '', country: 'Israel' });
+    const [form, setForm] = useState<{ label: string; street: string; city: string; state: string; zipCode: string; country: string; lat?: number; lng?: number }>({ 
+        label: 'Home', street: '', city: '', state: '', zipCode: '', country: 'Israel' 
+    });
     const [saving, setSaving] = useState(false);
 
     const isRtl = i18n.language === 'he' || i18n.language === 'ar';
@@ -48,7 +50,7 @@ export default function ShippingAddressesScreen() {
             setSaving(true);
             await createAddress({ ...form, isDefault: addresses.length === 0 });
             setShowModal(false);
-            setForm({ label: 'Home', street: '', city: '', country: 'Israel' });
+            setForm({ label: 'Home', street: '', city: '', state: '', zipCode: '', country: 'Israel' });
             await load();
         } catch (e: any) {
             Alert.alert('Error', e.message);
@@ -138,6 +140,8 @@ export default function ShippingAddressesScreen() {
                                     ...prev,
                                     street: details.fullText, // use full formatted text as street for UI clarity
                                     city: details.city || '',
+                                    state: details.state || '',
+                                    zipCode: details.zipCode || '',
                                     country: details.country || '',
                                     lat: details.lat,
                                     lng: details.lng

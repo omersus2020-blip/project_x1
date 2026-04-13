@@ -160,5 +160,30 @@
     "cancel": "ביטול",
     "save": "שמירה",
     "loading": "טוען..."
+  },
+  "header": {
+    "inbox": "תיבת דואר",
+    "deal_details": "פרטי העסקה",
+    "checkout": "קופה"
+  },
+  "checkout": {
+    "load_failed": "טעינת נתוני הקופה נכשלה",
+    "missing_address": "כתובת חסרה",
+    "please_add_address": "אנא בחר או הוסף כתובת למשלוח.",
+    "cancel_fee_notice": "הערה: אם תבטל את ההרשמה לפני פקיעת העסקה, יחול קנס של 5%.",
+    "item_summary": "סיכום פריט",
+    "quantity": "כמות:",
+    "delivery_address": "כתובת למשלוח",
+    "add_address": "הוסף כתובת למשלוח",
+    "payment_method": "אמצעי תשלום",
+    "coming_soon": "בקרוב",
+    "payment_bypass_title": "שילוב קופה מאובטחת",
+    "payment_bypass_desc": "אנו משלבים כעת ספק תשלומים צד-שלישי מאובטח. ניתן לאשר את ההרשמה ללא תשלום מראש! התשלום יגבה בשלב מאוחר יותר.",
+    "order_summary": "סיכום הזמנה",
+    "subtotal": "סכום ביניים",
+    "shipping": "משלוח",
+    "free": "חינם",
+    "total": "סך הכל",
+    "confirm": "אישור והצטרפות"
   }
 }

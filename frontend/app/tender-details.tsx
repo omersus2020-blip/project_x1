@@ -46,7 +46,10 @@ function getDiscountPercent(original: number, current: number): number {
 export default function TenderDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const isRtl = i18n.language === 'he' || i18n.language === 'ar';
+    const alignStyle: any = { textAlign: isRtl ? 'right' : 'left' };
+    const rowStyle: any = { flexDirection: isRtl ? 'row-reverse' : 'row' };
     const [tender, setTender] = useState<TenderFromAPI | null>(null);
     const [loading, setLoading] = useState(true);
     const [enrolling, setEnrolling] = useState(false);
@@ -198,17 +201,17 @@ export default function TenderDetailsScreen() {
 
                     {/* Title + Category */}
                     <View style={styles.titleSection}>
-                        <View style={styles.titleRow}>
-                            <Text style={styles.productTitle}>{tender.title}</Text>
+                        <View style={[styles.titleRow, rowStyle]}>
+                            <Text style={[styles.productTitle, alignStyle]}>{tender.title}</Text>
                             <View style={styles.categoryBadge}>
                                 <Text style={styles.categoryText}>{tender.category}</Text>
                             </View>
                         </View>
-                        <Text style={styles.description}>{tender.description}</Text>
+                        <Text style={[styles.description, alignStyle]}>{tender.description}</Text>
                     </View>
 
                     {/* Price section */}
-                    <View style={styles.priceSection}>
+                    <View style={[styles.priceSection, rowStyle]}>
                         <View style={styles.priceCol}>
                             <Text style={styles.priceLabel}>{t('tender.current_price', 'Current Price')}</Text>
                             <Text style={styles.currentPrice} adjustsFontSizeToFit={true} numberOfLines={1}>${tender.currentPrice.toFixed(2)}</Text>
@@ -232,12 +235,12 @@ export default function TenderDetailsScreen() {
 
                 {/* Participants section */}
                 <View style={styles.sectionCard}>
-                    <View style={styles.sectionHeader}>
+                    <View style={[styles.sectionHeader, rowStyle]}>
                         <MaterialIcons name="people-outline" size={20} color={AppColors.textPrimary} />
                         <Text style={styles.sectionTitle}>{t('tender.progress', 'Group Progress')}</Text>
                     </View>
 
-                    <View style={styles.participantsInfo}>
+                    <View style={[styles.participantsInfo, rowStyle]}>
                         <Text style={styles.participantsCount}>{tender.currentParticipants}</Text>
                         <Text style={styles.participantsTotal}>/ {tender.targetParticipants} {t('tender.people_joined', 'people joined')}</Text>
                     </View>
@@ -246,19 +249,19 @@ export default function TenderDetailsScreen() {
                         <View style={[styles.progressBar, { width: `${progressPercent}%` }]} />
                     </View>
 
-                    <Text style={styles.progressHint}>
+                    <Text style={[styles.progressHint, alignStyle]}>
                         {tender.targetParticipants - tender.currentParticipants} {t('tender.more_people_needed', 'more people needed to unlock the best price')}
                     </Text>
                 </View>
 
                 {/* Discount Ladder */}
                 <View style={styles.sectionCard}>
-                    <View style={styles.sectionHeader}>
+                    <View style={[styles.sectionHeader, rowStyle]}>
                         <MaterialIcons name="stacked-bar-chart" size={20} color={AppColors.textPrimary} />
                         <Text style={styles.sectionTitle}>{t('tender.ladder_title', 'Discount Ladder')}</Text>
                     </View>
 
-                    <View style={styles.ladderContainer}>
+                    <View style={[styles.ladderContainer, rowStyle]}>
                         {(tender.tiers || []).map((tier, i, arr) => {
                             const isReached = tender.currentParticipants >= tier.minParticipants;
                             const isCurrent = isReached && (
@@ -297,12 +300,12 @@ export default function TenderDetailsScreen() {
                             );
                         })}
                     </View>
-                    <View style={styles.ladderLegend}>
-                        <View style={styles.legendItem}>
+                    <View style={[styles.ladderLegend, rowStyle]}>
+                        <View style={[styles.legendItem, rowStyle]}>
                             <View style={[styles.legendDot, { backgroundColor: AppColors.priceGreen }]} />
                             <Text style={styles.legendText}>{t('tender.unlocked', 'Unlocked')}</Text>
                         </View>
-                        <View style={styles.legendItem}>
+                        <View style={[styles.legendItem, rowStyle]}>
                             <View style={[styles.legendDot, { backgroundColor: '#E5E7EB' }]} />
                             <Text style={styles.legendText}>{t('tender.locked', 'Locked')}</Text>
                         </View>
@@ -311,18 +314,18 @@ export default function TenderDetailsScreen() {
 
                 {/* Countdown Timer */}
                 <View style={styles.sectionCard}>
-                    <View style={styles.sectionHeader}>
+                    <View style={[styles.sectionHeader, rowStyle]}>
                         <MaterialIcons name="access-time" size={20} color={AppColors.textPrimary} />
                         <Text style={styles.sectionTitle}>{t('tender.time_remaining', 'Time Remaining')}</Text>
                     </View>
 
                     {countdown.isExpired ? (
-                        <View style={styles.expiredBanner}>
+                        <View style={[styles.expiredBanner, rowStyle]}>
                             <MaterialIcons name="timer-off" size={24} color={AppColors.textSecondary} />
                             <Text style={styles.expiredText}>{t('tender.deal_expired', 'This deal has expired')}</Text>
                         </View>
                     ) : (
-                        <View style={styles.countdownRow}>
+                        <View style={[styles.countdownRow, rowStyle]}>
                             <View style={styles.countdownItem}>
                                 <View style={styles.countdownBox}>
                                     <Text style={styles.countdownValue}>{countdown.days}</Text>

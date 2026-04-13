@@ -66,13 +66,13 @@ export default function TenderCheckoutScreen() {
             setAddresses(addressesData);
             setPaymentMethods(paymentsData);
 
-            if (addressesData.length > 0 && !selectedAddressId) {
+            if (addressesData.length > 0) {
                 const defAuth = addressesData.find((a: any) => a.isDefault);
-                setSelectedAddressId(defAuth ? defAuth.id : addressesData[0].id);
+                setSelectedAddressId(prev => prev || (defAuth ? defAuth.id : addressesData[0].id));
             }
-            if (paymentsData.length > 0 && !selectedPaymentId) {
+            if (paymentsData.length > 0) {
                 const defPay = paymentsData.find((p: any) => p.isDefault);
-                setSelectedPaymentId(defPay ? defPay.id : paymentsData[0].id);
+                setSelectedPaymentId(prev => prev || (defPay ? defPay.id : paymentsData[0].id));
             }
         } catch (error) {
             console.error('Failed to load checkout data', error);
@@ -81,7 +81,7 @@ export default function TenderCheckoutScreen() {
         } finally {
             setLoading(false);
         }
-    }, [id, t, router, selectedAddressId, selectedPaymentId]);
+    }, [id, t, router]);
 
     useFocusEffect(
         useCallback(() => {
@@ -101,17 +101,13 @@ export default function TenderCheckoutScreen() {
             Alert.alert(t('checkout.missing_address', 'Missing Address'), t('checkout.please_add_address', 'Please select or add a delivery address.'));
             return;
         }
-        if (!selectedPaymentId) {
-            Alert.alert(t('checkout.missing_payment', 'Missing Payment Method'), t('checkout.please_add_payment', 'Please select or add a payment method.'));
-            return;
-        }
 
         try {
             setProcessing(true);
             const user = await getStoredUser();
             if (!user) return;
 
-            await enrollTender(id as string, user.id, quantity, selectedAddressId, selectedPaymentId);
+            await enrollTender(id as string, user.id, quantity, selectedAddressId, selectedPaymentId || undefined);
 
             Alert.alert(
                 t('common.success', "Success!"),
@@ -149,26 +145,26 @@ export default function TenderCheckoutScreen() {
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
                 {/* Notice */}
-                <View style={styles.noticeCard}>
+                <View style={[styles.noticeCard, rowStyle]}>
                     <MaterialIcons name="info-outline" size={20} color="#EF4444" />
-                    <Text style={styles.noticeText}>
+                    <Text style={[styles.noticeText, alignStyle]}>
                         {t('checkout.cancel_fee_notice', 'Note: If you cancel your enrollment before the tender expires, a 5% fee will apply.')}
                     </Text>
                 </View>
 
                 {/* Item Summary */}
                 <View style={styles.sectionCard}>
-                    <Text style={styles.sectionTitle}>{t('checkout.item_summary', 'Item Summary')}</Text>
-                    <View style={styles.itemRow}>
+                    <Text style={[styles.sectionTitle, alignStyle]}>{t('checkout.item_summary', 'Item Summary')}</Text>
+                    <View style={[styles.itemRow, rowStyle]}>
                         <Image source={{ uri: tender.imageUrl }} style={styles.itemImage} />
                         <View style={styles.itemInfo}>
-                            <Text style={styles.itemTitle} numberOfLines={2}>{tender.title}</Text>
-                            <Text style={styles.itemPrice} adjustsFontSizeToFit={true} numberOfLines={1}>${tender.currentPrice.toFixed(2)}</Text>
+                            <Text style={[styles.itemTitle, alignStyle]} numberOfLines={2}>{tender.title}</Text>
+                            <Text style={[styles.itemPrice, alignStyle]} adjustsFontSizeToFit={true} numberOfLines={1}>${tender.currentPrice.toFixed(2)}</Text>
 
                             {/* Quantity Selector */}
-                            <View style={styles.quantityContainer}>
-                                <Text style={styles.quantityLabel}>{t('checkout.quantity', 'Quantity:')}</Text>
-                                <View style={styles.quantityControl}>
+                            <View style={[styles.quantityContainer, rowStyle]}>
+                                <Text style={[styles.quantityLabel, alignStyle]}>{t('checkout.quantity', 'Quantity:')}</Text>
+                                <View style={[styles.quantityControl, rowStyle]}>
                                     <Pressable
                                         onPress={() => handleQuantityChange(-1)}
                                         style={[styles.qtyBtn, quantity <= 1 && styles.qtyBtnDisabled]}
@@ -193,15 +189,15 @@ export default function TenderCheckoutScreen() {
 
                 {/* Delivery Address */}
                 <View style={styles.sectionCard}>
-                    <View style={styles.sectionHeaderRow}>
-                        <Text style={styles.sectionTitle}>{t('checkout.delivery_address', 'Delivery Address')}</Text>
+                    <View style={[styles.sectionHeaderRow, rowStyle]}>
+                        <Text style={[styles.sectionTitle, alignStyle, { marginBottom: 0 }]}>{t('checkout.delivery_address', 'Delivery Address')}</Text>
                         <Pressable onPress={() => router.push('/shipping-addresses')}>
                             <Text style={styles.editLink}>{t('common.edit', 'Edit')}</Text>
                         </Pressable>
                     </View>
 
                     {addresses.length === 0 ? (
-                        <Pressable style={styles.addDashedBtn} onPress={() => router.push('/shipping-addresses')}>
+                        <Pressable style={[styles.addDashedBtn, rowStyle]} onPress={() => router.push('/shipping-addresses')}>
                             <MaterialIcons name="add-location-alt" size={20} color={AppColors.textSecondary} />
                             <Text style={styles.addDashedText}>{t('checkout.add_address', 'Add Delivery Address')}</Text>
                         </Pressable>
@@ -234,75 +230,53 @@ export default function TenderCheckoutScreen() {
                     )}
                 </View>
 
-                {/* Payment Method */}
+                {/* Payment Method - Coming Soon Bypass */}
                 <View style={styles.sectionCard}>
-                    <View style={styles.sectionHeaderRow}>
-                        <Text style={styles.sectionTitle}>{t('checkout.payment_method', 'Payment Method')}</Text>
-                        <Pressable onPress={() => router.push('/payment-methods')}>
-                            <Text style={styles.editLink}>{t('common.edit', 'Edit')}</Text>
-                        </Pressable>
-                    </View>
-
-                    {paymentMethods.length === 0 ? (
-                        <Pressable style={styles.addDashedBtn} onPress={() => router.push('/payment-methods')}>
-                            <MaterialIcons name="add-card" size={20} color={AppColors.textSecondary} />
-                            <Text style={styles.addDashedText}>{t('checkout.add_payment', 'Add Payment Method')}</Text>
-                        </Pressable>
-                    ) : (
-                        <View style={styles.optionsList}>
-                            {paymentMethods.map(pm => (
-                                <Pressable
-                                    key={pm.id}
-                                    style={[styles.optionRow, rowStyle, selectedPaymentId === pm.id && styles.optionRowActive]}
-                                    onPress={() => setSelectedPaymentId(pm.id)}
-                                >
-                                    <View style={styles.radioOut}>
-                                        {selectedPaymentId === pm.id && <View style={styles.radioIn} />}
-                                    </View>
-                                    <View style={[styles.cardIcon, { marginRight: isRtl ? 0 : 12, marginLeft: isRtl ? 12 : 0 }]}>
-                                        <MaterialIcons name="credit-card" size={24} color={AppColors.textPrimary} />
-                                    </View>
-                                    <View style={[styles.optionDetails, { alignItems: isRtl ? 'flex-end' : 'flex-start' }]}>
-                                        <View style={[styles.cardHeader, rowStyle, { marginBottom: 4, width: '100%' }]}>
-                                            <Text style={[styles.cardBrand, alignStyle]}>{pm.brand}</Text>
-                                            {pm.isDefault && <Text style={[styles.defaultBadge, alignStyle]}>{t('payment.default', 'Default')}</Text>}
-                                        </View>
-                                        <Text style={[styles.cardNumber, alignStyle]}>•••• •••• •••• {pm.last4}</Text>
-                                        <Text style={[styles.cardExpiry, alignStyle]}>{t('payment.expires', 'Expires')} {String(pm.expiryMonth).padStart(2, '0')}/{pm.expiryYear}</Text>
-                                    </View>
-                                </Pressable>
-                            ))}
+                    <View style={[styles.sectionHeaderRow, rowStyle]}>
+                        <Text style={[styles.sectionTitle, alignStyle, { marginBottom: 0 }]}>{t('checkout.payment_method', 'Payment Method')}</Text>
+                        <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                            <Text style={{ color: '#D97706', fontSize: 12, fontWeight: '700' }}>{t('checkout.coming_soon', 'Coming Soon')}</Text>
                         </View>
-                    )}
+                    </View>
+                    
+                    <View style={{ backgroundColor: '#F8FAFC', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 12 }}>
+                        <MaterialIcons name="support-agent" size={28} color={AppColors.ctaButton} style={{ marginBottom: 8 }} />
+                        <Text style={{ fontSize: 15, fontWeight: '700', color: AppColors.textPrimary, marginBottom: 4, textAlign: 'center' }}>
+                            {t('checkout.payment_bypass_title', 'Secure Checkout Integration')}
+                        </Text>
+                        <Text style={{ fontSize: 14, color: AppColors.textSecondary, textAlign: 'center', lineHeight: 20 }}>
+                            {t('checkout.payment_bypass_desc', 'We are currently integrating a secure third-party payment provider. You can securely confirm your enrollment now with zero upfront cost! Payment details will be collected at checkout fulfillment.')}
+                        </Text>
+                    </View>
                 </View>
 
                 {/* Order Summary */}
                 <View style={styles.sectionCard}>
-                    <Text style={styles.sectionTitle}>{t('checkout.order_summary', 'Order Summary')}</Text>
+                    <Text style={[styles.sectionTitle, alignStyle]}>{t('checkout.order_summary', 'Order Summary')}</Text>
 
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>{t('checkout.subtotal', 'Subtotal')}</Text>
-                        <Text style={styles.summaryValue} adjustsFontSizeToFit={true} numberOfLines={1}>${subtotal.toFixed(2)}</Text>
+                    <View style={[styles.summaryRow, rowStyle]}>
+                        <Text style={[styles.summaryLabel, alignStyle]}>{t('checkout.subtotal', 'Subtotal')}</Text>
+                        <Text style={[styles.summaryValue, alignStyle]} adjustsFontSizeToFit={true} numberOfLines={1}>${subtotal.toFixed(2)}</Text>
                     </View>
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>{t('checkout.shipping', 'Shipping')}</Text>
-                        <Text style={styles.summaryValueFree}>{t('checkout.free', 'Free')}</Text>
+                    <View style={[styles.summaryRow, rowStyle]}>
+                        <Text style={[styles.summaryLabel, alignStyle]}>{t('checkout.shipping', 'Shipping')}</Text>
+                        <Text style={[styles.summaryValueFree, alignStyle]}>{t('checkout.free', 'Free')}</Text>
                     </View>
 
                     <View style={styles.summaryDivider} />
 
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryTotalLabel}>{t('checkout.total', 'Total')}</Text>
-                        <Text style={styles.summaryTotalValue} adjustsFontSizeToFit={true} numberOfLines={1}>${total.toFixed(2)}</Text>
+                    <View style={[styles.summaryRow, rowStyle]}>
+                        <Text style={[styles.summaryTotalLabel, alignStyle]}>{t('checkout.total', 'Total')}</Text>
+                        <Text style={[styles.summaryTotalValue, alignStyle]} adjustsFontSizeToFit={true} numberOfLines={1}>${total.toFixed(2)}</Text>
                     </View>
                 </View>
 
             </ScrollView>
 
-            <View style={styles.footer}>
+            <View style={[styles.footer, rowStyle]}>
                 <View style={styles.footerInfo}>
-                    <Text style={styles.footerTotalLabel}>{t('checkout.total', 'Total')}</Text>
-                    <Text style={styles.footerTotalValue} adjustsFontSizeToFit={true} numberOfLines={1}>${total.toFixed(2)}</Text>
+                    <Text style={[styles.footerTotalLabel, alignStyle]}>{t('checkout.total', 'Total')}</Text>
+                    <Text style={[styles.footerTotalValue, alignStyle]} adjustsFontSizeToFit={true} numberOfLines={1}>${total.toFixed(2)}</Text>
                 </View>
                 <Pressable
                     style={({ pressed }) => [

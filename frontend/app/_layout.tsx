@@ -13,10 +13,12 @@ import { useRouter } from 'expo-router';
 import { Pressable, I18nManager, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AppColors } from '@/constants/theme';
+import { useTranslation } from 'react-i18next';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const CustomHeaderBack = () => (
     <View style={{
@@ -63,7 +65,7 @@ export default function RootLayout() {
         <Stack.Screen
           name="notifications"
           options={{
-            title: 'Inbox',
+            title: t('header.inbox', 'Inbox'),
             headerTitleStyle: { fontWeight: '700' },
             headerLeft: () => <CustomHeaderBack />,
           }}
@@ -71,7 +73,7 @@ export default function RootLayout() {
         <Stack.Screen
           name="tender-details"
           options={{
-            title: 'Deal Details',
+            title: t('header.deal_details', 'Deal Details'),
             headerTitleStyle: { fontWeight: '700' },
             headerLeft: () => <CustomHeaderBack />,
           }}
@@ -79,7 +81,7 @@ export default function RootLayout() {
         <Stack.Screen
           name="tender-checkout"
           options={{
-            title: 'Checkout',
+            title: t('header.checkout', 'Checkout'),
             headerTitleStyle: { fontWeight: '700' },
             headerLeft: () => <CustomHeaderBack />,
           }}
