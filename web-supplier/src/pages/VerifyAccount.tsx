@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, Mail, ArrowRight, RefreshCw, AlertCircle } from 'lucide-react';
+import { ShieldCheck, ArrowRight, RefreshCw, AlertCircle } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supplierApi } from '../lib/api';
 import { useAuth } from '../lib/AuthContext';
@@ -95,9 +95,9 @@ const VerifyAccount = () => {
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
             <div className="animate-fade" style={{ width: '100%', maxWidth: '480px', padding: '24px' }}>
                 <div className="glass-panel" style={{ padding: '48px', textAlign: 'center' }}>
-                    <div style={{ 
-                        width: '80px', height: '80px', background: 'rgba(16, 185, 129, 0.1)', 
-                        borderRadius: '24px', display: 'flex', alignItems: 'center', 
+                    <div style={{
+                        width: '80px', height: '80px', background: 'rgba(16, 185, 129, 0.1)',
+                        borderRadius: '24px', display: 'flex', alignItems: 'center',
                         justifyContent: 'center', margin: '0 auto 32px', border: '1px solid rgba(16, 185, 129, 0.2)',
                         color: '#10b981'
                     }}>
@@ -106,7 +106,7 @@ const VerifyAccount = () => {
 
                     <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '12px' }}>Verify Account</h1>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>
-                        We've sent a 6-digit verification code to <br/>
+                        We've sent a 6-digit verification code to <br />
                         <strong style={{ color: 'var(--text-primary)' }}>{email}</strong>
                     </p>
 
@@ -121,12 +121,12 @@ const VerifyAccount = () => {
                             {code.map((digit, i) => (
                                 <input
                                     key={i}
-                                    ref={el => inputs.current[i] = el}
+                                    ref={(el) => { inputs.current[i] = el; }}
                                     type="text"
                                     className="input-field"
-                                    style={{ 
-                                        width: '56px', height: '64px', padding: 0, textAlign: 'center', 
-                                        fontSize: '1.5rem', fontWeight: 700, 
+                                    style={{
+                                        width: '56px', height: '64px', padding: 0, textAlign: 'center',
+                                        fontSize: '1.5rem', fontWeight: 700,
                                         borderColor: digit ? 'var(--accent-primary)' : 'rgba(255,255,255,0.1)'
                                     }}
                                     value={digit}
@@ -138,9 +138,9 @@ const VerifyAccount = () => {
                             ))}
                         </div>
 
-                        <button 
-                            type="submit" 
-                            className="premium-btn" 
+                        <button
+                            type="submit"
+                            className="premium-btn"
                             disabled={loading || code.some(d => !d)}
                             style={{ width: '100%', justifyContent: 'center', height: '56px', fontSize: '1.1rem' }}
                         >
@@ -154,12 +154,12 @@ const VerifyAccount = () => {
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                             Didn't receive the code?
                         </p>
-                        <button 
+                        <button
                             onClick={handleResend}
                             disabled={timer > 0 || resending}
-                            style={{ 
-                                background: 'none', border: 'none', color: timer > 0 ? 'var(--text-muted)' : 'var(--accent-primary)', 
-                                fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', 
+                            style={{
+                                background: 'none', border: 'none', color: timer > 0 ? 'var(--text-muted)' : 'var(--accent-primary)',
+                                fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px',
                                 margin: '8px auto 0', cursor: timer > 0 ? 'default' : 'pointer'
                             }}
                         >

@@ -11,6 +11,7 @@ import { AppColors } from '@/constants/theme';
 import { fetchAddresses, createAddress, deleteAddress } from '@/constants/api';
 import { useTranslation } from 'react-i18next';
 import AutocompleteInput from '@/components/AutocompleteInput';
+import GoogleAddressInput from '@/components/GoogleAddressInput';
 interface Address {
     id: string; label: string; street: string; city: string;
     state: string; country: string; isDefault: boolean;
@@ -22,7 +23,7 @@ export default function ShippingAddressesScreen() {
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [form, setForm] = useState({ label: 'Home', street: '', city: '', country: 'Israel' });
+    const [form, setForm] = useState<{ label: string; street: string; city: string; country: string; lat?: number; lng?: number }>({ label: 'Home', street: '', city: '', country: 'Israel' });
     const [saving, setSaving] = useState(false);
 
     const isRtl = i18n.language === 'he' || i18n.language === 'ar';
@@ -39,8 +40,8 @@ export default function ShippingAddressesScreen() {
     };
 
     const handleAdd = async () => {
-        if (!form.street.trim() || !form.city.trim()) {
-            Alert.alert(t('common.error', 'Error'), t('shipping.error_empty', 'Please fill in street and city'));
+        if (!form.street.trim()) {
+            Alert.alert(t('common.error', 'Error'), t('shipping.error_empty', 'Please select a valid address from the search.'));
             return;
         }
         try {
@@ -130,26 +131,21 @@ export default function ShippingAddressesScreen() {
                                 <MaterialIcons name="close" size={24} color={AppColors.textMuted} />
                             </Pressable>
                         </View>
-                        {[
-                            { key: 'country', placeholder: t('shipping.country', 'Country'), icon: 'flag' },
-                            { key: 'city', placeholder: t('shipping.city', 'City'), icon: 'location-city' },
-                            { key: 'street', placeholder: t('shipping.street', 'Street address'), icon: 'home' },
-                            { key: 'label', placeholder: t('shipping.notes', 'Specific notes'), icon: 'note' },
-                        ].map(({ key, placeholder, icon }, index) => (
-                            <AutocompleteInput
-                                key={key}
-                                type={key as 'label' | 'street' | 'city' | 'country'}
-                                value={(form as any)[key]}
-                                onChangeText={(v) => setForm({ ...form, [key]: v })}
-                                placeholder={placeholder}
-                                icon={icon}
-                                alignStyle={alignStyle}
-                                rowStyle={rowStyle}
-                                zIndex={20 - index}
-                                importantForAutofill="noExcludeDescendants"
-                            />
-                        ))}
-                        <View style={[styles.modalActions, rowStyle]}>
+                        <GoogleAddressInput 
+                            placeholder={t('shipping.search_address', 'Search via Google Maps')}
+                            onSelect={(details) => {
+                                setForm(prev => ({
+                                    ...prev,
+                                    street: details.fullText, // use full formatted text as street for UI clarity
+                                    city: details.city || '',
+                                    country: details.country || '',
+                                    lat: details.lat,
+                                    lng: details.lng
+                                }));
+                            }}
+                            zIndex={30}
+                        />
+                        <View style={[styles.modalActions, rowStyle, { zIndex: 1 }]}>
                             <Pressable style={styles.cancelBtn} onPress={() => setShowModal(false)}>
                                 <Text style={styles.cancelText}>{t('shipping.cancel', 'Cancel')}</Text>
                             </Pressable>

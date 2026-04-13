@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Use your machine's local IP for Expo to connect to the backend properly
 const getBaseUrl = () => {
-    return 'http://192.168.1.16:3000';
+    return 'http://192.168.1.194:3000';
 };
 
 export const API_URL = getBaseUrl();
@@ -170,10 +170,12 @@ export async function fetchAddresses() {
 export async function createAddress(data: {
     label?: string; street: string; city: string;
     state?: string; country?: string; isDefault?: boolean;
+    lat?: number; lng?: number;
 }) {
+    const { lat, lng, ...payload } = data; // Omit lat/lng since they don't exist in backend schema yet
     return authFetch(`${API_URL}/addresses`, {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
     });
 }
 

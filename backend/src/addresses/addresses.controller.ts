@@ -7,7 +7,7 @@ export class AddressesController {
     constructor(
         private addressesService: AddressesService,
         private jwtService: JwtService,
-    ) {}
+    ) { }
 
     private getUserId(authHeader: string): string {
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -27,10 +27,16 @@ export class AddressesController {
     @Post()
     async create(
         @Headers('authorization') auth: string,
-        @Body() body: { label?: string; street: string; city: string; state?: string; country?: string; isDefault?: boolean },
+        @Body() body: any, // Changed to any to see exactly what arrives
     ) {
         const userId = this.getUserId(auth);
-        return this.addressesService.create(userId, body);
+        console.log('Incoming Address Payload:', body);
+        try {
+            return await this.addressesService.create(userId, body);
+        } catch (e) {
+            console.error('ADDRESS CREATE ERROR:', e);
+            throw e;
+        }
     }
 
     @Patch(':id')
