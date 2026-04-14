@@ -104,10 +104,6 @@ export default function SignUpScreen() {
                                     placeholderTextColor={AppColors.textMuted}
                                     value={name}
                                     onChangeText={setName}
-                                    importantForAutofill="noExcludeDescendants"
-                                    textContentType="none"
-                                    autoComplete="off"
-                                    id="f_su_n"
                                 />
                             </View>
                         </View>
@@ -126,10 +122,7 @@ export default function SignUpScreen() {
                                     autoCorrect={false}
                                     value={email}
                                     onChangeText={setEmail}
-                                    importantForAutofill="noExcludeDescendants"
-                                    textContentType="none"
-                                    autoComplete="off"
-                                    id="f_su_e"
+                                    keyboardType="email-address"
                                 />
                             </View>
                         </View>
@@ -146,9 +139,7 @@ export default function SignUpScreen() {
                                     keyboardType="phone-pad"
                                     value={phone}
                                     onChangeText={setPhone}
-                                    importantForAutofill="yes"
-                                    textContentType="telephoneNumber"
-                                    id="f_su_ph"
+                                    keyboardType="phone-pad"
                                 />
                             </View>
                         </View>
@@ -165,10 +156,6 @@ export default function SignUpScreen() {
                                     secureTextEntry={!showPassword}
                                     value={password}
                                     onChangeText={setPassword}
-                                    importantForAutofill="noExcludeDescendants"
-                                    textContentType="none"
-                                    autoComplete="off"
-                                    id="f_su_p"
                                 />
                                 <Pressable onPress={() => setShowPassword(!showPassword)}>
                                     <MaterialIcons
@@ -192,10 +179,6 @@ export default function SignUpScreen() {
                                     secureTextEntry={!showPassword}
                                     value={confirmPassword}
                                     onChangeText={setConfirmPassword}
-                                    importantForAutofill="noExcludeDescendants"
-                                    textContentType="none"
-                                    autoComplete="off"
-                                    id="f_su_cp"
                                 />
                             </View>
                         </View>

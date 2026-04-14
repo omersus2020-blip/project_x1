@@ -1,9 +1,20 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-// Use your machine's local IP for Expo to connect to the backend properly
+// Automatically finds your computer's IP whether you're on Hotspot or Home Wi-Fi!
 const getBaseUrl = () => {
-    return 'http://192.168.1.194:3000';
+    // Dynamically grab the IP address of the development machine from Expo
+    const debuggerHost = Constants.expoConfig?.hostUri;
+
+    if (debuggerHost) {
+        // debuggerHost looks like "192.168.1.5:8081", we just want the IP and we append port 3000
+        const localhost = debuggerHost.split(':')[0];
+        return `http://${localhost}:3000`;
+    }
+
+    // Fallback for production or when the host URI is unavailable
+    return 'http://172.20.10.2:3000';
 };
 
 export const API_URL = getBaseUrl();
